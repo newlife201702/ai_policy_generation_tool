@@ -1,0 +1,24 @@
+[2025-04-07T07:01:33.637Z] [app] [31merror[39m: MongoDB connection error: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017
+[2025-04-07T10:49:15.503Z] [sms] [31merror[39m: 验证码发送异常: 18296421883, 该账号下找不到对应模板, URL: http://dysmsapi.aliyuncs.com/?AccessKeyId=LTAI5tFLx1oUfG2MLdLvVCff&Action=SendSms&Format=JSON&PhoneNumbers=18296421883&SignName=%E5%88%BA%E7%8C%AC%E6%98%9F%E7%90%83&SignatureMethod=HMAC-SHA1&SignatureNonce=07929a6b12c27e26fea3fe3b9a0005ca&SignatureVersion=1.0&TemplateCode=SMS_276385115&TemplateParam=%7B%22code%22%3A%22596372%22%7D&Timestamp=2025-04-07T10%3A49%3A15Z&Version=2017-05-25&Signature=Pk3okT1tCTIVOwpV8IB%2F%2FZ%2BC02E%3D
+[2025-04-09T13:06:44.740Z] [auth] [31merror[39m: JWT 验证失败: 用户不存在
+[2025-04-09T13:13:13.175Z] [auth] [31merror[39m: JWT 验证失败: 用户不存在
+[2025-04-09T13:13:13.180Z] [auth] [31merror[39m: JWT 验证失败: 用户不存在
+[2025-04-09T13:13:43.181Z] [auth] [31merror[39m: JWT 验证失败: 用户不存在
+[2025-04-09T13:13:43.185Z] [auth] [31merror[39m: JWT 验证失败: 用户不存在
+[2025-04-09T13:23:41.734Z] [model] [31merror[39m: 模型调用失败: Request failed with status code 401
+[2025-04-09T13:23:41.735Z] [chat] [31merror[39m: 文字对话失败: 模型调用失败
+[2025-04-10T14:54:18.313Z] [model] [31merror[39m: 模型流式调用失败:
+[2025-04-10T14:54:18.315Z] [model] [31merror[39m: 模型流式 API 错误响应:
+[2025-04-10T14:55:19.865Z] [model] [31merror[39m: 模型流式调用失败:
+[2025-04-10T14:55:19.866Z] [model] [31merror[39m: 模型流式 API 错误响应:
+[2025-04-10T15:03:54.717Z] [model] [31merror[39m: 模型流式调用失败:
+[2025-04-10T15:03:54.717Z] [model] [31merror[39m: 模型流式 API 错误响应:
+[2025-04-10T15:06:56.011Z] [model] [31merror[39m: 模型流式调用失败:
+[2025-04-10T15:06:56.011Z] [model] [31merror[39m: 模型流式 API 错误响应:
+[2025-04-10T15:12:46.208Z] [model] [31merror[39m: 模型流式调用失败:
+[2025-04-10T15:12:46.209Z] [model] [31merror[39m: 模型流式 API 错误响应:
+[2025-04-11T01:36:42.259Z] [model] [31merror[39m: 模型流式调用失败:
+[2025-04-11T01:36:42.259Z] [model] [31merror[39m: 模型流式 API 错误响应:
+[2025-04-11T01:47:10.873Z] [model] [31merror[39m: 模型流式调用失败:
+[2025-04-11T01:47:10.874Z] [model] [31merror[39m: 模型流式 API 错误响应:
+[2025-04-11T01:48:19.019Z] [model] [31merror[39m: 模型流式调用失败:
