@@ -91,6 +91,7 @@ interface ExtendedMessage extends Omit<Message, 'role'> {
   isStreaming?: boolean;
   error?: boolean;
   parentId?: string;
+  hidden?: boolean;
 }
 
 // 修改ModelSelect组件，添加精确的泛型类型
@@ -179,55 +180,75 @@ const TextChat: React.FC = () => {
   // 添加选中消息的状态
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
 
-  // 开始新的对话
-  const handleStartChat = async (initialMessages: ExtendedMessage[], selectedModel: string) => {
-    setMessages(initialMessages);
-    setModel(selectedModel as ChatModel);
+  // 修改handleStartChat函数
+  const handleStartChat = async (contents: string[], selectedModel: ChatModel) => {
+    console.log('开始新的对话');
     setChatStarted(true);
+    setLoading(true);
+    setModel(selectedModel);
     
-    // 检查是否有初始消息，如果有，自动发送第一条消息
-    if (initialMessages.length > 0) {
-      console.log('有初始消息，自动发送到API', initialMessages[0]);
+    try {
+      // 清空现有消息
+      setMessages([{
+        id: uuidv4(),
+        role: 'user',
+        content: contents[0],
+        timestamp: new Date().toISOString(),
+        hidden: false // 添加hidden属性，表示不显示
+      }]);
       
-      try {
-        setLoading(true);
+      // 创建5个独立的对话
+      for (let i = 0; i < contents.length; i++) {
+        const content = contents[i];
         
-        // 创建一个临时的助手消息用于流式显示
+        // 添加用户消息（但不显示）
+        const userMessage: ExtendedMessage = {
+          id: uuidv4(),
+          role: 'user',
+          content: content,
+          timestamp: new Date().toISOString(),
+          hidden: true // 添加hidden属性，表示不显示
+        };
+        
+        // 添加初始的助手消息
         const assistantMessage: ExtendedMessage = {
           id: uuidv4(),
           role: 'assistant',
-          type: 'assistant',
           content: '',
           timestamp: new Date().toISOString(),
           isStreaming: true
         };
         
-        // 添加助手消息到消息列表
-        setMessages(prevMessages => [...prevMessages, assistantMessage]);
+        // 添加消息到列表
+        setMessages(prev => [...prev, userMessage, assistantMessage]);
         
-        // 使用fetch API直接发送请求
-        console.log('发送请求到: /api/chat/text/stream');
+        // 准备请求数据
+        const requestData = {
+          messages: [
+            { 
+              role: 'user', 
+              content,
+              timestamp: userMessage.timestamp
+            }
+          ],
+          model: selectedModel
+        };
+        
+        // 发送请求
         const response = await fetch('/api/chat/text/stream', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           },
-          body: JSON.stringify({
-            messages: initialMessages.map(msg => ({
-              role: msg.role,
-              content: msg.content,
-              timestamp: msg.timestamp
-            })),
-            model: selectedModel
-          })
+          body: JSON.stringify(requestData)
         });
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         
-        // 流式传输处理逻辑，并调整为正确解析SSE格式
+        // 流式传输处理逻辑
         const reader = response.body?.getReader();
         if (!reader) {
           throw new Error('无法获取响应流');
@@ -240,18 +261,13 @@ const TextChat: React.FC = () => {
         
         // 创建一个更新UI的函数
         const updateUI = (content: string) => {
-          setMessages(prevMessages => {
-            const updatedMessages = [...prevMessages];
-            const lastMessageIndex = updatedMessages.length - 1;
-            
-            if (lastMessageIndex >= 0) {
-              updatedMessages[lastMessageIndex] = {
-                ...updatedMessages[lastMessageIndex],
-                content
-              };
+          setMessages(prev => {
+            const newMessages = [...prev];
+            const lastMessage = newMessages[newMessages.length - 1];
+            if (lastMessage && lastMessage.role === 'assistant') {
+              lastMessage.content = content;
             }
-            
-            return updatedMessages;
+            return newMessages;
           });
         };
         
@@ -301,50 +317,27 @@ const TextChat: React.FC = () => {
           console.error('流式读取过程中出错:', error);
         } finally {
           // 流式传输完成后，更新最后一条消息的状态
-          setMessages(prevMessages => {
-            const updatedMessages = [...prevMessages];
-            const lastMessageIndex = updatedMessages.length - 1;
-            
-            if (lastMessageIndex >= 0) {
-              updatedMessages[lastMessageIndex] = {
-                ...updatedMessages[lastMessageIndex],
-                isStreaming: false
-              };
+          setMessages(prev => {
+            const newMessages = [...prev];
+            const lastMessage = newMessages[newMessages.length - 1];
+            if (lastMessage && lastMessage.role === 'assistant') {
+              lastMessage.isStreaming = false;
             }
-            
-            return updatedMessages;
+            return newMessages;
           });
-          setLoading(false); // 流式传输完成时设置loading为false
         }
-        
-      } catch (error) {
-        console.error('聊天请求失败:', error);
-        message.error('生成品牌策略失败，请重试');
-        
-        // 更新最后一条消息的状态
-        setMessages(prevMessages => {
-          const updatedMessages = [...prevMessages];
-          const lastMessageIndex = updatedMessages.length - 1;
-          
-          if (lastMessageIndex >= 0) {
-            updatedMessages[lastMessageIndex] = {
-              ...updatedMessages[lastMessageIndex],
-              isStreaming: false,
-              content: '回复生成失败，请重试。',
-              error: true
-            };
-          }
-          
-          return updatedMessages;
-        });
-        setLoading(false); // 发生错误时设置loading为false
       }
+    } catch (error) {
+      console.error('开始对话失败:', error);
+      message.error('开始对话失败');
+    } finally {
+      setLoading(false);
     }
   };
   
   // 发送新消息
   const handleSendMessage = async (content: string) => {
-    if (!content.trim()) return;
+    if (!selectedMessageId || !content.trim()) return;
     
     console.log('开始发送消息');
     setLoading(true);
@@ -432,7 +425,8 @@ const TextChat: React.FC = () => {
       const updateUI = (content: string) => {
         setMessages(prev => {
           const newMessages = [...prev];
-          const lastMessage = newMessages[newMessages.length - 1];
+          const index = prev.findIndex(msg => msg.id === selectedMessageId);
+          const lastMessage = newMessages[index + 2];
           if (lastMessage && lastMessage.role === 'assistant') {
             lastMessage.content = content;
           }
@@ -488,13 +482,15 @@ const TextChat: React.FC = () => {
         // 流式传输完成后，更新最后一条消息的状态
         setMessages(prev => {
           const newMessages = [...prev];
-          const lastMessage = newMessages[newMessages.length - 1];
+          const index = prev.findIndex(msg => msg.id === selectedMessageId);
+          const lastMessage = newMessages[index + 2];
           if (lastMessage && lastMessage.role === 'assistant') {
             lastMessage.isStreaming = false;
           }
           return newMessages;
         });
         setLoading(false); // 流式传输完成时设置loading为false
+        setSelectedMessageId(null);
       }
       
     } catch (error) {
@@ -511,6 +507,7 @@ const TextChat: React.FC = () => {
         return newMessages;
       });
       setLoading(false); // 捕获到异常时设置loading为false
+      setSelectedMessageId(null);
     }
   };
   

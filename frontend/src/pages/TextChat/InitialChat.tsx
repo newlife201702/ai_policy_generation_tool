@@ -178,48 +178,22 @@ const InitialChat: React.FC<{
   const [loading, setLoading] = useState(false);
   
   const handleGenerateStrategy = async () => {
-    console.log('生成品牌策略按钮被点击');
-    
-    if (!companyInfo.trim()) {
-      message.warning('请输入公司介绍');
+    if (!companyInfo.trim() || !brandGoal.trim()) {
+      message.error('请填写公司信息和品牌宣传目的');
       return;
     }
-    
-    setLoading(true);
-    console.log('正在准备生成策略数据', { companyInfo, brandGoal, model });
-    
-    try {
-      const messages = [
-        {
-          id: Date.now().toString(),
-          role: 'user',
-          content: `公司信息: ${companyInfo}
-${brandGoal ? `品牌宣传的目的: ${brandGoal}` : ''}
 
-根据客户提供的公司信息和品牌宣传的目的，为客户输出以下五个模块的结果
-模块一：行业数据 及 市场情况分析  （联网查询该行业相关信息并进行市场行业和趋势分析）
+    // 将内容拆分成5个部分
+    const contents = [
+      `公司信息: ${companyInfo}\n品牌宣传的目的: ${brandGoal}\n请提供行业数据和市场情况分析。`,
+      `公司信息: ${companyInfo}\n品牌宣传的目的: ${brandGoal}\n请提供目标受众提炼和15秒黄金内容提炼。`,
+      `公司信息: ${companyInfo}\n品牌宣传的目的: ${brandGoal}\n请提供产品信任和通过客户个案解决客户信任问题。`,
+      `公司信息: ${companyInfo}\n品牌宣传的目的: ${brandGoal}\n请提供用户痛点挖掘及创意点。`,
+      `公司信息: ${companyInfo}\n品牌宣传的目的: ${brandGoal}\n请提供营销策略建议。`
+    ];
 
-模块二：15秒黄金内容提炼 ：结合市场分析结果，提炼公司最有优势且最契合用户宣传目的的关键优势提炼最核心的内容 按内容提炼/  内容层次划分/用户阅读路径三个点罗列出来，并说明为什么要这么罗列的原因。
-
-模块三：根据罗列的内容分别说明，通过罗列的内容分别说明这些内容解决客户的哪些信任问题 （按产品信任 品牌信任 价值观信任区分）
-
-模块四：根据客户做大的卖点，用巅峰体验做为标题：提供视觉或者文案内容的创意达到让浏览公司品牌门户网站时，用户眼前一亮并且产生深刻记忆点，可提供多种方案。
-
-模块五：根据以上全部内容，结合目前的网络推广途径，为客户整理出一套完善的品牌线上营销策略
-
-输出的五个模块的结果以“======”作为分隔符进行分隔，方便我获取整个结果后通过分隔符进行分隔分别得到五个模块的结果`,
-          timestamp: new Date().toISOString()
-        }
-      ];
-      
-      console.log('调用onStartChat函数', messages);
-      onStartChat(messages, model);
-    } catch (error) {
-      console.error('生成策略失败:', error);
-      message.error('生成失败，请稍后重试');
-    } finally {
-      setLoading(false);
-    }
+    // 调用父组件的onStartChat函数，传入拆分后的内容
+    onStartChat(contents, model);
   };
   
   return (

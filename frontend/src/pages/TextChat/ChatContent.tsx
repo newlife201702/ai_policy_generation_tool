@@ -15,6 +15,7 @@ interface ExtendedMessage extends Message {
   isStreaming?: boolean;
   error?: boolean;
   parentId?: string;
+  hidden?: boolean;
 }
 
 const { TextArea } = Input;
@@ -385,8 +386,8 @@ const ChatContent: React.FC<ChatContentProps> = ({
   const renderFlowithStyle = () => {
     if (messages.length < 2) return null;
     
-    // 找到用户消息
-    const userMessages = messages.filter(msg => msg.role === 'user');
+    // 找到用户消息和助手消息
+    const userMessages = messages.filter(msg => msg.role === 'user' && !msg.hidden);
     const assistantMessages = messages.filter(msg => msg.role === 'assistant');
     
     if (userMessages.length === 0 || assistantMessages.length === 0) return null;
@@ -400,29 +401,47 @@ const ChatContent: React.FC<ChatContentProps> = ({
     const companyInfo = companyInfoMatch ? companyInfoMatch[1] : "";
     const brandGoal = brandGoalMatch ? brandGoalMatch[1] : "";
     
-    // 渲染最后一个助手消息，将其分成5个部分
-    const assistantMessage = assistantMessages[assistantMessages.length - 1];
-    const assistantContent = assistantMessage.content;
-    
-    // 尝试根据标题分割内容
-    const sections = [];
-    const titles = [
-      "行业数据", "市场情况分析", 
-      "目标受众提炼", "15秒黄金内容提炼", 
-      "产品信任", "通过客户个案解决客户信任问题",
-      "用户痛点", "用户痛点挖掘及创意点", 
-      "营销策略", "营销策略建议"
-    ];
-    
-    let content1 = "", content2 = "", content3 = "", content4 = "", content5 = "";
-    
-    // 简单根据数字分隔符来分割内容
-    const parts = assistantContent.split('======');
-    content1 = parts[1];
-    content2 = parts[2];
-    content3 = parts[3];
-    content4 = parts[4];
-    content5 = parts[5];
+    // 渲染5个助手消息
+    const responseBoxes = assistantMessages.map((message, index) => {
+      const isStreaming = message.isStreaming;
+      const content = message.content;
+      
+      return (
+        <ResponseBox key={message.id}>
+          <ResponseContent>
+            {isStreaming ? (
+              <MarkdownStyles>
+                {content}
+              </MarkdownStyles>
+            ) : (
+              <MarkdownStyles>{renderMessage(message, index)}</MarkdownStyles>
+            )}
+            <MessageActions>
+              <Button 
+                type="text" 
+                icon={<ReloadOutlined />} 
+                onClick={() => onRegenerateMessage(index)}
+              />
+              <Button 
+                type="text" 
+                icon={<CopyOutlined />} 
+                onClick={() => {
+                  navigator.clipboard.writeText(content);
+                  antMessage.success('已复制到剪贴板');
+                }}
+              />
+            </MessageActions>
+          </ResponseContent>
+          <ModelInfo>
+            <ModelAvatar>
+              <ModelIcon src="/gpt-icon.png" />
+              <span>GPT-4o mini</span>
+            </ModelAvatar>
+            <TimeInfo>{formatTime(message.timestamp)}</TimeInfo>
+          </ModelInfo>
+        </ResponseBox>
+      );
+    });
     
     return (
       <React.Fragment>
@@ -458,95 +477,7 @@ const ChatContent: React.FC<ChatContentProps> = ({
           </UserInputSection>
           
           <ResponseSection>
-            {content1 && (
-              <ResponseBox>
-                <ResponseContent>
-                  {/* <MarkdownStyles>
-                    <ReactMarkdown>{content1}</ReactMarkdown>
-                  </MarkdownStyles> */}
-                  {renderMessage({id: '1', content: content1, role: 'assistant', timestamp: assistantMessage.timestamp}, 1)}
-                </ResponseContent>
-                <ModelInfo>
-                  <ModelAvatar>
-                    <ModelIcon src="/gpt-icon.png" />
-                    <span>GPT-4o mini</span>
-                  </ModelAvatar>
-                  <TimeInfo>{formatTime(assistantMessage.timestamp)}</TimeInfo>
-                </ModelInfo>
-              </ResponseBox>
-            )}
-            
-            {content2 && (
-              <ResponseBox>
-                <ResponseContent>
-                  {/* <MarkdownStyles>
-                    <ReactMarkdown>{content2}</ReactMarkdown>
-                  </MarkdownStyles> */}
-                  {renderMessage({id: '2', content: content2, role: 'assistant', timestamp: assistantMessage.timestamp}, 2)}
-                </ResponseContent>
-                <ModelInfo>
-                  <ModelAvatar>
-                    <ModelIcon src="/gpt-icon.png" />
-                    <span>GPT-4o mini</span>
-                  </ModelAvatar>
-                  <TimeInfo>{formatTime(assistantMessage.timestamp)}</TimeInfo>
-                </ModelInfo>
-              </ResponseBox>
-            )}
-            
-            {content3 && (
-              <ResponseBox>
-                <ResponseContent>
-                  {/* <MarkdownStyles>
-                    <ReactMarkdown>{content3}</ReactMarkdown>
-                  </MarkdownStyles> */}
-                  {renderMessage({id: '3', content: content3, role: 'assistant', timestamp: assistantMessage.timestamp}, 3)}
-                </ResponseContent>
-                <ModelInfo>
-                  <ModelAvatar>
-                    <ModelIcon src="/gpt-icon.png" />
-                    <span>GPT-4o mini</span>
-                  </ModelAvatar>
-                  <TimeInfo>{formatTime(assistantMessage.timestamp)}</TimeInfo>
-                </ModelInfo>
-              </ResponseBox>
-            )}
-            
-            {content4 && (
-              <ResponseBox>
-                <ResponseContent>
-                  {/* <MarkdownStyles>
-                    <ReactMarkdown>{content4}</ReactMarkdown>
-                  </MarkdownStyles> */}
-                  {renderMessage({id: '4', content: content4, role: 'assistant', timestamp: assistantMessage.timestamp}, 4)}
-                </ResponseContent>
-                <ModelInfo>
-                  <ModelAvatar>
-                    <ModelIcon src="/gpt-icon.png" />
-                    <span>GPT-4o mini</span>
-                  </ModelAvatar>
-                  <TimeInfo>{formatTime(assistantMessage.timestamp)}</TimeInfo>
-                </ModelInfo>
-              </ResponseBox>
-            )}
-            
-            {content5 && (
-              <ResponseBox>
-                <ResponseContent>
-                  {/* <MarkdownStyles>
-                    <ReactMarkdown>{content5}</ReactMarkdown>
-                  </MarkdownStyles> */}
-                  {renderMessage({id: '5', content: content5, role: 'assistant', timestamp: assistantMessage.timestamp}, 5)}
-                </ResponseContent>
-                <ModelInfo>
-                  <ModelAvatar>
-                    <ModelIcon src="/gpt-icon.png" />
-                    <span>GPT-4o mini</span>
-                  </ModelAvatar>
-                  <TimeInfo>{formatTime(assistantMessage.timestamp)}</TimeInfo>
-                </ModelInfo>
-              </ResponseBox>
-            )}
+            {responseBoxes}
           </ResponseSection>
         </ChatWrapper>
         
@@ -581,6 +512,9 @@ const ChatContent: React.FC<ChatContentProps> = ({
   
   // 修改renderMessage函数
   const renderMessage = (message: ExtendedMessage, index: number) => {
+    // 如果消息被标记为隐藏，则不渲染
+    if (message.hidden) return null;
+    
     const isSelected = message.id === selectedMessageId;
     
     if (message.role === 'user') {
@@ -591,8 +525,7 @@ const ChatContent: React.FC<ChatContentProps> = ({
           isSelected={false}
         >
           <MessageContent>
-            {/* <StyledMarkdown>{message.content}</StyledMarkdown> */}
-            <ReactMarkdown>{message.content}</ReactMarkdown>
+            <MarkdownStyles>{message.content}</MarkdownStyles>
           </MessageContent>
         </MessageWrapper>
       );
@@ -606,8 +539,7 @@ const ChatContent: React.FC<ChatContentProps> = ({
         onClick={() => onSelectMessage(message.id)}
       >
         <MessageContent>
-          {/* <StyledMarkdown>{message.content}</StyledMarkdown> */}
-            <ReactMarkdown>{message.content}</ReactMarkdown>
+          <MarkdownStyles>{message.content}</MarkdownStyles>
           <MessageActions>
             <Button 
               type="text" 
@@ -653,13 +585,13 @@ const ChatContent: React.FC<ChatContentProps> = ({
     flex-direction: column;
   `;
 
-  // const StyledMarkdown = styled(ReactMarkdown)`
-  //   white-space: pre-wrap;
-  //   margin-bottom: 15px;
-  //   color: white;
-  //   font-size: 14px;
-  //   line-height: 1.6;
-  // `;
+  const StyledMarkdown = styled(ReactMarkdown)`
+    white-space: pre-wrap;
+    margin-bottom: 15px;
+    color: white;
+    font-size: 14px;
+    line-height: 1.6;
+  `;
 
   return (
     <Container>
