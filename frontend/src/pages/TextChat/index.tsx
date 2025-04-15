@@ -90,6 +90,7 @@ interface ExtendedMessage extends Omit<Message, 'role'> {
   type?: 'user' | 'assistant' | 'bot';
   isStreaming?: boolean;
   error?: boolean;
+  parentId?: string;
 }
 
 // 修改ModelSelect组件，添加精确的泛型类型
@@ -174,6 +175,9 @@ const TextChat: React.FC = () => {
     
     checkAuth();
   }, [isAuthenticated, token, navigate]);
+
+  // 添加选中消息的状态
+  const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
 
   // 开始新的对话
   const handleStartChat = async (initialMessages: ExtendedMessage[], selectedModel: string) => {
@@ -310,6 +314,7 @@ const TextChat: React.FC = () => {
             
             return updatedMessages;
           });
+          setLoading(false); // 流式传输完成时设置loading为false
         }
         
       } catch (error) {
@@ -332,6 +337,7 @@ const TextChat: React.FC = () => {
           
           return updatedMessages;
         });
+        setLoading(false); // 发生错误时设置loading为false
       }
     }
   };
@@ -339,6 +345,9 @@ const TextChat: React.FC = () => {
   // 发送新消息
   const handleSendMessage = async (content: string) => {
     if (!content.trim()) return;
+    
+    console.log('开始发送消息');
+    setLoading(true);
     
     // 添加用户消息
     const userMessage: ExtendedMessage = {
@@ -354,73 +363,140 @@ const TextChat: React.FC = () => {
       role: 'assistant',
       content: '',
       timestamp: new Date().toISOString(),
-      isStreaming: true
+      isStreaming: true,
+      parentId: selectedMessageId
     };
     
-    setMessages(prev => [...prev, userMessage, assistantMessage]);
+    // 如果选择了消息，将新消息插入到选中消息之后
+    if (selectedMessageId) {
+      setMessages(prev => {
+        const index = prev.findIndex(msg => msg.id === selectedMessageId);
+        if (index === -1) return [...prev, userMessage, assistantMessage];
+        return [
+          ...prev.slice(0, index + 1),
+          userMessage,
+          assistantMessage,
+          ...prev.slice(index + 1)
+        ];
+      });
+    } else {
+      setMessages(prev => [...prev, userMessage, assistantMessage]);
+    }
     
     try {
       // 准备请求数据
-      const requestData: ChatRequest = {
+      const requestData = {
         messages: [
           ...messages.map(msg => ({
-            id: msg.id,
             role: msg.role,
             content: msg.content,
             timestamp: msg.timestamp
           })),
           { 
-            id: userMessage.id,
-            role: 'user' as const, 
+            role: 'user', 
             content,
             timestamp: userMessage.timestamp
           }
         ],
-        model: model
+        model: model,
+        parentMessageId: selectedMessageId
       };
       
-      // 使用流式响应
-      await fetchStreamResponse(
-        '/chat/stream',
-        requestData,
-        (data) => {
-          // 实时更新最后一条消息的内容
-          setMessages(prev => {
-            const newMessages = [...prev];
-            const lastMessage = newMessages[newMessages.length - 1];
-            if (lastMessage && lastMessage.role === 'assistant') {
-              // 直接追加新的内容块
-              lastMessage.content += data.content;
-            }
-            return newMessages;
-          });
+      console.log('准备发送流式请求');
+      // 使用fetch API直接发送请求
+      const response = await fetch('/api/chat/text/stream', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
-        (error) => {
-          console.error('流式响应错误:', error);
-          message.error('获取回复失败');
-          // 更新最后一条消息状态
-          setMessages(prev => {
-            const newMessages = [...prev];
-            const lastMessage = newMessages[newMessages.length - 1];
-            if (lastMessage && lastMessage.role === 'assistant') {
-              lastMessage.isStreaming = false;
-              lastMessage.error = true;
+        body: JSON.stringify(requestData)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      // 流式传输处理逻辑
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('无法获取响应流');
+      }
+      
+      // 读取流式数据
+      const decoder = new TextDecoder();
+      let done = false;
+      const accumulator = { content: '' };
+      
+      // 创建一个更新UI的函数
+      const updateUI = (content: string) => {
+        setMessages(prev => {
+          const newMessages = [...prev];
+          const lastMessage = newMessages[newMessages.length - 1];
+          if (lastMessage && lastMessage.role === 'assistant') {
+            lastMessage.content = content;
+          }
+          return newMessages;
+        });
+      };
+      
+      // 流式读取响应
+      try {
+        while (!done) {
+          const { value, done: readerDone } = await reader.read();
+          done = readerDone;
+          
+          if (value) {
+            const text = decoder.decode(value, { stream: !done });
+            console.log('收到数据块:', text.substring(0, 50) + (text.length > 50 ? '...' : ''));
+            
+            // 处理SSE数据
+            const lines = text.split('\n').filter(line => line.trim() !== '');
+            
+            for (const line of lines) {
+              if (line.startsWith('data:')) {
+                try {
+                  const jsonStr = line.substring(5).trim();
+                  if (jsonStr === '[DONE]') {
+                    console.log('收到完成标志');
+                    continue;
+                  }
+                  
+                  const jsonData = JSON.parse(jsonStr);
+                  
+                  if (jsonData.error) {
+                    console.error('服务器返回错误:', jsonData.error);
+                    throw new Error(jsonData.error);
+                  }
+                  
+                  if (jsonData.content) {
+                    accumulator.content += jsonData.content;
+                    console.log('累积内容长度:', accumulator.content.length);
+                    // 立即更新UI
+                    updateUI(accumulator.content);
+                  }
+                } catch (e) {
+                  console.error('解析SSE数据失败:', e, line);
+                }
+              }
             }
-            return newMessages;
-          });
-        },
-        () => {
-          // 流式传输完成，更新最后一条消息状态
-          setMessages(prev => {
-            const newMessages = [...prev];
-            const lastMessage = newMessages[newMessages.length - 1];
-            if (lastMessage && lastMessage.role === 'assistant') {
-              lastMessage.isStreaming = false;
-            }
-            return newMessages;
-          });
+          }
         }
-      );
+      } catch (error) {
+        console.error('流式读取过程中出错:', error);
+      } finally {
+        // 流式传输完成后，更新最后一条消息的状态
+        setMessages(prev => {
+          const newMessages = [...prev];
+          const lastMessage = newMessages[newMessages.length - 1];
+          if (lastMessage && lastMessage.role === 'assistant') {
+            lastMessage.isStreaming = false;
+          }
+          return newMessages;
+        });
+        setLoading(false); // 流式传输完成时设置loading为false
+      }
+      
     } catch (error) {
       console.error('发送消息失败:', error);
       message.error('发送消息失败');
@@ -434,6 +510,7 @@ const TextChat: React.FC = () => {
         }
         return newMessages;
       });
+      setLoading(false); // 捕获到异常时设置loading为false
     }
   };
   
@@ -561,6 +638,11 @@ const TextChat: React.FC = () => {
     return updated;
   };
 
+  // 添加选择消息的处理函数
+  const handleSelectMessage = (messageId: string) => {
+    setSelectedMessageId(messageId);
+  };
+
   return (
     <ChatContainer>
       {showHistory && (
@@ -591,11 +673,13 @@ const TextChat: React.FC = () => {
           <InitialChat onStartChat={handleStartChat} />
         ) : (
           <ChatContent 
-            messages={messages as any} // 暂时使用类型断言解决类型不兼容问题
+            messages={messages}
             onSendMessage={handleSendMessage}
             onRegenerateMessage={handleRegenerateMessage}
             loading={loading}
             onNewChat={handleNewChat}
+            onSelectMessage={handleSelectMessage}
+            selectedMessageId={selectedMessageId}
           />
         )}
       </ChatPanel>

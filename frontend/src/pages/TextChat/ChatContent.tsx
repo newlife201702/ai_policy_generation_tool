@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Input, Button, message, Spin, Tooltip } from 'antd';
+import { Input, Button, message as antMessage, Spin, Tooltip } from 'antd';
 import {
   SendOutlined,
   ReloadOutlined,
@@ -9,6 +9,13 @@ import {
 import styled from 'styled-components';
 import ReactMarkdown from 'react-markdown';
 import { Message } from '../../types/chat';
+
+// 定义扩展的消息类型
+interface ExtendedMessage extends Message {
+  isStreaming?: boolean;
+  error?: boolean;
+  parentId?: string;
+}
 
 const { TextArea } = Input;
 
@@ -301,11 +308,13 @@ const MarkdownStyles = styled.div`
 `;
 
 interface ChatContentProps {
-  messages: Message[];
-  onSendMessage: (content: string) => void;
-  onRegenerateMessage: (index: number) => void;
+  messages: ExtendedMessage[];
+  onSendMessage: (content: string) => Promise<void>;
+  onRegenerateMessage: (index: number) => Promise<void>;
   loading: boolean;
   onNewChat: () => void;
+  onSelectMessage: (messageId: string) => void;
+  selectedMessageId: string | null;
 }
 
 const ChatContent: React.FC<ChatContentProps> = ({
@@ -313,7 +322,9 @@ const ChatContent: React.FC<ChatContentProps> = ({
   onSendMessage,
   onRegenerateMessage,
   loading,
-  onNewChat
+  onNewChat,
+  onSelectMessage,
+  selectedMessageId
 }) => {
   const [inputValue, setInputValue] = useState('');
   const chatAreaRef = useRef<HTMLDivElement>(null);
@@ -342,10 +353,10 @@ const ChatContent: React.FC<ChatContentProps> = ({
   const handleCopy = (content: string) => {
     navigator.clipboard.writeText(content).then(
       () => {
-        message.success('已复制到剪贴板');
+        antMessage.success('已复制到剪贴板');
       },
       () => {
-        message.error('复制失败');
+        antMessage.error('复制失败');
       }
     );
   };
@@ -388,13 +399,6 @@ const ChatContent: React.FC<ChatContentProps> = ({
     
     const companyInfo = companyInfoMatch ? companyInfoMatch[1] : "";
     const brandGoal = brandGoalMatch ? brandGoalMatch[1] : "";
-    console.log('userMessages', userMessages,
-      'firstUserMessage', firstUserMessage,
-      'content', content,
-      'companyInfoMatch', companyInfoMatch,
-      'brandGoalMatch', brandGoalMatch,
-      'companyInfo', companyInfo,
-      'brandGoal', brandGoal);
     
     // 渲染最后一个助手消息，将其分成5个部分
     const assistantMessage = assistantMessages[assistantMessages.length - 1];
@@ -457,9 +461,10 @@ const ChatContent: React.FC<ChatContentProps> = ({
             {content1 && (
               <ResponseBox>
                 <ResponseContent>
-                  <MarkdownStyles>
+                  {/* <MarkdownStyles>
                     <ReactMarkdown>{content1}</ReactMarkdown>
-                  </MarkdownStyles>
+                  </MarkdownStyles> */}
+                  {renderMessage({id: '1', content: content1, role: 'assistant', timestamp: assistantMessage.timestamp}, 1)}
                 </ResponseContent>
                 <ModelInfo>
                   <ModelAvatar>
@@ -474,9 +479,10 @@ const ChatContent: React.FC<ChatContentProps> = ({
             {content2 && (
               <ResponseBox>
                 <ResponseContent>
-                  <MarkdownStyles>
+                  {/* <MarkdownStyles>
                     <ReactMarkdown>{content2}</ReactMarkdown>
-                  </MarkdownStyles>
+                  </MarkdownStyles> */}
+                  {renderMessage({id: '2', content: content2, role: 'assistant', timestamp: assistantMessage.timestamp}, 2)}
                 </ResponseContent>
                 <ModelInfo>
                   <ModelAvatar>
@@ -491,9 +497,10 @@ const ChatContent: React.FC<ChatContentProps> = ({
             {content3 && (
               <ResponseBox>
                 <ResponseContent>
-                  <MarkdownStyles>
+                  {/* <MarkdownStyles>
                     <ReactMarkdown>{content3}</ReactMarkdown>
-                  </MarkdownStyles>
+                  </MarkdownStyles> */}
+                  {renderMessage({id: '3', content: content3, role: 'assistant', timestamp: assistantMessage.timestamp}, 3)}
                 </ResponseContent>
                 <ModelInfo>
                   <ModelAvatar>
@@ -508,9 +515,10 @@ const ChatContent: React.FC<ChatContentProps> = ({
             {content4 && (
               <ResponseBox>
                 <ResponseContent>
-                  <MarkdownStyles>
+                  {/* <MarkdownStyles>
                     <ReactMarkdown>{content4}</ReactMarkdown>
-                  </MarkdownStyles>
+                  </MarkdownStyles> */}
+                  {renderMessage({id: '4', content: content4, role: 'assistant', timestamp: assistantMessage.timestamp}, 4)}
                 </ResponseContent>
                 <ModelInfo>
                   <ModelAvatar>
@@ -525,9 +533,10 @@ const ChatContent: React.FC<ChatContentProps> = ({
             {content5 && (
               <ResponseBox>
                 <ResponseContent>
-                  <MarkdownStyles>
+                  {/* <MarkdownStyles>
                     <ReactMarkdown>{content5}</ReactMarkdown>
-                  </MarkdownStyles>
+                  </MarkdownStyles> */}
+                  {renderMessage({id: '5', content: content5, role: 'assistant', timestamp: assistantMessage.timestamp}, 5)}
                 </ResponseContent>
                 <ModelInfo>
                   <ModelAvatar>
@@ -552,45 +561,11 @@ const ChatContent: React.FC<ChatContentProps> = ({
     );
   };
   
-  // 仅在不是Flowith样式的情况下渲染传统的聊天界面
+  // 修改renderTraditionalChat函数
   const renderTraditionalChat = () => {
     return (
       <>
-        {messages.map((msg, index) => (
-          <MessageContainer key={index}>
-            {msg.role === 'user' ? (
-              <UserMessage>{msg.content}</UserMessage>
-            ) : (
-              <BotMessage>
-                <MessageActions className="message-actions">
-                  <Tooltip title="重新生成">
-                    <ActionButton
-                      icon={<ReloadOutlined />}
-                      shape="circle"
-                      onClick={() => onRegenerateMessage(index)}
-                      disabled={loading || msg.isStreaming}
-                    />
-                  </Tooltip>
-                  <Tooltip title="复制内容">
-                    <ActionButton
-                      icon={<CopyOutlined />}
-                      shape="circle"
-                      onClick={() => handleCopy(msg.content)}
-                    />
-                  </Tooltip>
-                </MessageActions>
-                <MarkdownStyles>
-                  <ReactMarkdown>{msg.content}</ReactMarkdown>
-                </MarkdownStyles>
-                {msg.isStreaming && (
-                  <div style={{ marginTop: '10px' }}>
-                    <Spin size="small" /> <span style={{ marginLeft: '8px', fontSize: '12px' }}>正在生成...</span>
-                  </div>
-                )}
-              </BotMessage>
-            )}
-          </MessageContainer>
-        ))}
+        {messages.map((msg, index) => renderMessage(msg, index))}
         
         {/* 只在没有显示流式消息时显示加载状态 */}
         {loading && !messages.some(msg => msg.isStreaming) && (
@@ -604,6 +579,88 @@ const ChatContent: React.FC<ChatContentProps> = ({
     );
   };
   
+  // 修改renderMessage函数
+  const renderMessage = (message: ExtendedMessage, index: number) => {
+    const isSelected = message.id === selectedMessageId;
+    
+    if (message.role === 'user') {
+      return (
+        <MessageWrapper 
+          key={message.id}
+          isUser={true}
+          isSelected={false}
+        >
+          <MessageContent>
+            {/* <StyledMarkdown>{message.content}</StyledMarkdown> */}
+            <ReactMarkdown>{message.content}</ReactMarkdown>
+          </MessageContent>
+        </MessageWrapper>
+      );
+    }
+    
+    return (
+      <MessageWrapper 
+        key={message.id}
+        isUser={false}
+        isSelected={isSelected}
+        onClick={() => onSelectMessage(message.id)}
+      >
+        <MessageContent>
+          {/* <StyledMarkdown>{message.content}</StyledMarkdown> */}
+            <ReactMarkdown>{message.content}</ReactMarkdown>
+          <MessageActions>
+            <Button 
+              type="text" 
+              icon={<ReloadOutlined />} 
+              onClick={(e) => {
+                e.stopPropagation();
+                onRegenerateMessage(index);
+              }}
+            />
+            <Button 
+              type="text" 
+              icon={<CopyOutlined />} 
+              onClick={(e) => {
+                e.stopPropagation();
+                navigator.clipboard.writeText(message.content);
+                antMessage.success('已复制到剪贴板');
+              }}
+            />
+          </MessageActions>
+        </MessageContent>
+      </MessageWrapper>
+    );
+  };
+  
+  // 添加选中的样式
+  const MessageWrapper = styled.div<{ isUser: boolean; isSelected: boolean }>`
+    display: flex;
+    justify-content: ${props => props.isUser ? 'flex-end' : 'flex-start'};
+    margin: 8px 0;
+    padding: 8px;
+    border-radius: 8px;
+    background-color: ${props => props.isSelected ? '#e6f7ff' : 'transparent'};
+    border: ${props => props.isSelected ? '1px solid #1890ff' : 'none'};
+    cursor: ${props => !props.isUser ? 'pointer' : 'default'};
+    
+    &:hover {
+      background-color: ${props => !props.isUser ? '#f5f5f5' : 'transparent'};
+    }
+  `;
+
+  const MessageContent = styled.div`
+    display: flex;
+    flex-direction: column;
+  `;
+
+  // const StyledMarkdown = styled(ReactMarkdown)`
+  //   white-space: pre-wrap;
+  //   margin-bottom: 15px;
+  //   color: white;
+  //   font-size: 14px;
+  //   line-height: 1.6;
+  // `;
+
   return (
     <Container>
       <ChatArea ref={chatAreaRef}>

@@ -87,6 +87,7 @@ export const fetchStreamResponse = async (
   onComplete: () => void
 ) => {
   try {
+    console.log('开始发送流式请求:', url);
     const response = await fetch(`${baseURL}${url}`, {
       method: 'POST',
       headers: {
@@ -96,6 +97,7 @@ export const fetchStreamResponse = async (
       body: JSON.stringify(data)
     });
 
+    console.log('收到响应:', response.status, response.statusText);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -105,14 +107,28 @@ export const fetchStreamResponse = async (
       throw new Error('无法获取响应流');
     }
 
+    console.log('开始读取响应流');
     const decoder = new TextDecoder();
     let buffer = '';
 
     while (true) {
+      console.log('准备读取下一块数据');
       const { value, done } = await reader.read();
-      if (done) break;
+      console.log('读取到数据块:', value ? '有数据' : '无数据', 'done:', done);
+      
+      if (done) {
+        console.log('流式传输结束');
+        // 确保在流结束时调用完成回调
+        try {
+          onComplete();
+        } catch (e) {
+          console.error('执行完成回调时出错:', e);
+        }
+        break;
+      }
 
       buffer += decoder.decode(value, { stream: true });
+      console.log('当前缓冲区内容:', buffer);
       
       // 处理缓冲区中的所有完整消息
       const lines = buffer.split('\n');
@@ -123,7 +139,10 @@ export const fetchStreamResponse = async (
         if (line.startsWith('data:')) {
           try {
             const jsonStr = line.substring(5).trim();
+            console.log('处理SSE数据:', jsonStr);
+            
             if (jsonStr === '[DONE]') {
+              console.log('收到完成标志');
               onComplete();
               continue;
             }
@@ -133,7 +152,6 @@ export const fetchStreamResponse = async (
               throw new Error(jsonData.error);
             }
             
-            // 立即传递每个内容块
             onData(jsonData);
           } catch (e) {
             console.error('解析SSE数据失败:', e, line);
@@ -146,6 +164,8 @@ export const fetchStreamResponse = async (
     if (buffer.trim() !== '') {
       try {
         const jsonStr = buffer.substring(5).trim();
+        console.log('处理剩余SSE数据:', jsonStr);
+        
         if (jsonStr !== '[DONE]') {
           const jsonData = JSON.parse(jsonStr);
           onData(jsonData);
@@ -154,9 +174,8 @@ export const fetchStreamResponse = async (
         console.error('解析剩余SSE数据失败:', e, buffer);
       }
     }
-
-    onComplete();
   } catch (error) {
+    console.error('流式请求发生错误:', error);
     onError(error as Error);
   }
 };
