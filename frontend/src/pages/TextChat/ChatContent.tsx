@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Input, Button, message as antMessage, Spin, Tooltip } from 'antd';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { Input, Button, message as antMessage, Spin } from 'antd';
 import {
   SendOutlined,
   ReloadOutlined,
@@ -9,6 +9,13 @@ import {
 import styled from 'styled-components';
 import ReactMarkdown from 'react-markdown';
 import { Message } from '../../types/chat';
+import ReactFlow, { 
+  Node, 
+  Edge,
+  Handle,
+  Position,
+} from 'reactflow';
+import 'reactflow/dist/style.css';
 
 // 定义扩展的消息类型
 interface ExtendedMessage extends Message {
@@ -40,23 +47,11 @@ const ChatArea = styled.div`
 `;
 
 const ChatWrapper = styled.div`
-  max-width: 1200px;
   width: 100%;
   padding: 20px;
   display: flex;
   flex-direction: column;
   position: relative;
-`;
-
-const ConnectionLine = styled.div`
-  position: absolute;
-  left: 50%;
-  top: 100px;
-  bottom: 50px;
-  width: 2px;
-  background-color: rgba(255, 255, 255, 0.1);
-  transform: translateX(-50%);
-  z-index: 0;
 `;
 
 const UserInputSection = styled.div`
@@ -73,17 +68,6 @@ const UserInputBox = styled.div`
   border-radius: 8px;
   padding: 20px;
   position: relative;
-  
-  &:after {
-    content: "";
-    position: absolute;
-    bottom: -30px;
-    left: 50%;
-    width: 2px;
-    height: 30px;
-    background-color: rgba(255, 255, 255, 0.1);
-    transform: translateX(-50%);
-  }
 `;
 
 const UserInputContent = styled.div`
@@ -122,23 +106,14 @@ const ResponseSection = styled.div`
 `;
 
 const ResponseBox = styled.div`
-  width: calc(33.33% - 15px);
+  max-width: 200px;
+  min-width: 200px;
   background-color: rgba(255, 255, 255, 0.05);
   border-radius: 8px;
   padding: 20px;
   margin-bottom: 30px;
   position: relative;
-  
-  &:before {
-    content: "";
-    position: absolute;
-    top: -30px;
-    left: 50%;
-    width: 2px;
-    height: 30px;
-    background-color: rgba(255, 255, 255, 0.1);
-    transform: translateX(-50%);
-  }
+  font-size: 12px;
   
   @media (max-width: 768px) {
     width: 100%;
@@ -273,7 +248,7 @@ const NewChatButton = styled(Button)`
 
 const MarkdownStyles = styled.div`
   color: white;
-  font-size: 16px;
+  font-size: 12px;
   line-height: 1.6;
   
   h1, h2, h3, h4, h5, h6 {
@@ -311,7 +286,7 @@ const MarkdownStyles = styled.div`
 interface ChatContentProps {
   messages: ExtendedMessage[];
   onSendMessage: (content: string) => Promise<void>;
-  onRegenerateMessage: (index: number) => Promise<void>;
+  onRegenerateMessage: (message: ExtendedMessage) => Promise<void>;
   loading: boolean;
   onNewChat: () => void;
   onSelectMessage: (messageId: string) => void;
@@ -442,13 +417,89 @@ const ChatContent: React.FC<ChatContentProps> = ({
         </ResponseBox>
       );
     });
+
+    const FlowContainer = styled.div`
+      width: 100%;
+      height: 500px;
+    `;
+    // 将消息转换为节点
+    const nodes: Node[] = [
+      {
+        id: '0',
+        role: 'user',
+        content: companyInfo,
+        timestamp: firstUserMessage.timestamp
+      },
+      {
+        id: '1',
+        role: 'user',
+        content: brandGoal,
+        timestamp: firstUserMessage.timestamp
+      }
+    ].concat(assistantMessages).map((message, index) => ({
+      id: message.id,
+      type: 'custom',
+      data: message,
+      position: { x: (message.role === 'user' ? index + 1.5 : index - 2) * 250, y: message.role === 'user' ? 100 : 300 },
+    }));
+  
+    // 创建边
+    const edges: Edge[] = assistantMessages
+      .concat(assistantMessages
+        .map(message => ({
+          ...message,
+          parentId: '1'
+        }))
+      )
+      .filter(message => message.parentId)
+      .map(message => ({
+        id: `${message.parentId}-${message.id}`,
+        source: message.parentId,
+        target: message.id,
+        type: 'smoothstep',
+      }));
+      console.log('messages', messages, 'assistantMessages', assistantMessages, 'edges', edges);
+
+    const CustomNode = ({ data: message, isConnectable }) => {
+      return (
+        <ResponseBox key={message.id}>
+          <Handle
+            type="target"
+            position={Position.Top}
+            isConnectable={isConnectable}
+          />
+          <ResponseContent>
+            {message.isStreaming ? (
+              <MarkdownStyles>
+                {message.content}
+              </MarkdownStyles>
+            ) : (
+              <MarkdownStyles>{renderMessage(message)}</MarkdownStyles>
+            )}
+          </ResponseContent>
+          <ModelInfo>
+            <ModelAvatar>
+              <ModelIcon src="/gpt-icon.png" />
+              <span>GPT-4o mini</span>
+            </ModelAvatar>
+            <TimeInfo>{formatTime(message.timestamp)}</TimeInfo>
+          </ModelInfo>
+          <Handle
+            type="source"
+            position={Position.Bottom}
+            isConnectable={isConnectable}
+          />
+        </ResponseBox>
+      );
+    };
+  
+    // 然后在节点定义中使用 type: 'custom'
+    const nodeTypes = useMemo(() => ({ custom: CustomNode }), []);
     
     return (
       <React.Fragment>
         <ChatWrapper>
-          <ConnectionLine />
-          
-          <UserInputSection>
+          {/* <UserInputSection>
             {companyInfo && (
               <UserInputBox>
                 <UserInputContent>{companyInfo}</UserInputContent>
@@ -474,10 +525,19 @@ const ChatContent: React.FC<ChatContentProps> = ({
                 </UserInfo>
               </UserInputBox>
             )}
-          </UserInputSection>
+          </UserInputSection> */}
           
           <ResponseSection>
-            {responseBoxes}
+          {/* {responseBoxes} */}
+            <FlowContainer>
+              <ReactFlow
+                nodes={nodes}
+                edges={edges}
+                nodeTypes={nodeTypes}
+                fitView
+              >
+              </ReactFlow>
+            </FlowContainer>
           </ResponseSection>
         </ChatWrapper>
         
@@ -511,7 +571,7 @@ const ChatContent: React.FC<ChatContentProps> = ({
   };
   
   // 修改renderMessage函数
-  const renderMessage = (message: ExtendedMessage, index: number) => {
+  const renderMessage = (message: ExtendedMessage) => {
     // 如果消息被标记为隐藏，则不渲染
     if (message.hidden) return null;
     
@@ -546,7 +606,7 @@ const ChatContent: React.FC<ChatContentProps> = ({
               icon={<ReloadOutlined />} 
               onClick={(e) => {
                 e.stopPropagation();
-                onRegenerateMessage(index);
+                onRegenerateMessage(message);
               }}
             />
             <Button 

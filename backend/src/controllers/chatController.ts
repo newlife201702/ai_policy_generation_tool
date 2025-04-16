@@ -109,7 +109,7 @@ export const chatController = {
         return res.status(401).json({ message: '未授权，请先登录' });
       }
       
-      const { messages, model = 'deepseek' } = req.body as { messages: Message[]; model: string };
+      const { messages, model = 'deepseek', id, parentId } = req.body as { messages: Message[]; model: string; id: string; parentId: string };
       const userId = req.user._id;
 
       logger.info(`用户 ${userId} 请求与模型 ${model} 流式聊天`);
@@ -161,9 +161,11 @@ export const chatController = {
             const chatHistory = new ChatHistory({
               userId,
               messages: [...messages, {
+                id,
                 role: 'assistant',
                 content: fullContent,
                 timestamp: new Date(),
+                parentId
               }],
               model,
             });

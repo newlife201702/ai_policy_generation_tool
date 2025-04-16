@@ -194,7 +194,8 @@ const TextChat: React.FC = () => {
         role: 'user',
         content: contents[0],
         timestamp: new Date().toISOString(),
-        hidden: false // 添加hidden属性，表示不显示
+        hidden: false, // 添加hidden属性，表示不显示
+        parentId: undefined
       }]);
       
       // 创建5个独立的对话
@@ -207,7 +208,8 @@ const TextChat: React.FC = () => {
           role: 'user',
           content: content,
           timestamp: new Date().toISOString(),
-          hidden: true // 添加hidden属性，表示不显示
+          hidden: true, // 添加hidden属性，表示不显示
+          parentId: undefined
         };
         
         // 添加初始的助手消息
@@ -216,7 +218,8 @@ const TextChat: React.FC = () => {
           role: 'assistant',
           content: '',
           timestamp: new Date().toISOString(),
-          isStreaming: true
+          isStreaming: true,
+          parentId: '0'
         };
         
         // 添加消息到列表
@@ -225,13 +228,15 @@ const TextChat: React.FC = () => {
         // 准备请求数据
         const requestData = {
           messages: [
-            { 
+            {
               role: 'user', 
               content,
               timestamp: userMessage.timestamp
             }
           ],
-          model: selectedModel
+          model: selectedModel,
+          id: assistantMessage.id,
+          parentId: '0'
         };
         
         // 发送请求
@@ -302,7 +307,7 @@ const TextChat: React.FC = () => {
                     
                     if (jsonData.content) {
                       accumulator.content += jsonData.content;
-                      console.log('累积内容长度:', accumulator.content.length);
+                      // console.log('累积内容长度:', accumulator.content.length);
                       // 立即更新UI
                       updateUI(accumulator.content);
                     }
@@ -348,6 +353,7 @@ const TextChat: React.FC = () => {
       role: 'user',
       content: content,
       timestamp: new Date().toISOString(),
+      parentId: selectedMessageId
     };
     
     // 添加初始的助手消息
@@ -357,7 +363,7 @@ const TextChat: React.FC = () => {
       content: '',
       timestamp: new Date().toISOString(),
       isStreaming: true,
-      parentId: selectedMessageId
+      parentId: userMessage.id
     };
     
     // 如果选择了消息，将新消息插入到选中消息之后
@@ -386,13 +392,16 @@ const TextChat: React.FC = () => {
             timestamp: msg.timestamp
           })),
           { 
+            id: userMessage.id,
             role: 'user', 
             content,
-            timestamp: userMessage.timestamp
+            timestamp: userMessage.timestamp,
+            parentId: selectedMessageId
           }
         ],
         model: model,
-        parentMessageId: selectedMessageId
+        id: assistantMessage.id,
+        parentId: userMessage.id
       };
       
       console.log('准备发送流式请求');
@@ -465,7 +474,7 @@ const TextChat: React.FC = () => {
                   
                   if (jsonData.content) {
                     accumulator.content += jsonData.content;
-                    console.log('累积内容长度:', accumulator.content.length);
+                    // console.log('累积内容长度:', accumulator.content.length);
                     // 立即更新UI
                     updateUI(accumulator.content);
                   }
@@ -512,7 +521,7 @@ const TextChat: React.FC = () => {
   };
   
   // 重新生成最后一条助手消息
-  const handleRegenerateMessage = async (index: number) => {
+  const handleRegenerateMessage = async (message: ExtendedMessage) => {
     // 获取对应的用户消息
     const userMessage = messages.filter(msg => msg.role === 'user').pop();
     if (!userMessage) return;

@@ -20,6 +20,14 @@ const chatHistorySchema = new mongoose.Schema({
       type: Date,
       default: Date.now,
     },
+    id: {
+      type: String,
+      default: undefined,
+    },
+    parentId: {
+      type: String,
+      default: undefined,
+    },
   }],
   model: {
     type: String,
