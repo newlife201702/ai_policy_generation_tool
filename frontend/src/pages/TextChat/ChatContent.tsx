@@ -9,13 +9,16 @@ import {
 import styled from 'styled-components';
 import ReactMarkdown from 'react-markdown';
 import { Message } from '../../types/chat';
-import ReactFlow, { 
-  Node, 
+import {
+  ReactFlow,
+  Node,
   Edge,
   Handle,
   Position,
-} from 'reactflow';
-import 'reactflow/dist/style.css';
+  useNodesState,
+  useEdgesState,
+} from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
 
 // 定义扩展的消息类型
 interface ExtendedMessage extends Message {
@@ -302,6 +305,8 @@ const ChatContent: React.FC<ChatContentProps> = ({
   onSelectMessage,
   selectedMessageId
 }) => {
+  const [nodes, setNodes] = useNodesState([]);
+  const [edges, setEdges] = useEdgesState([]);
   const [inputValue, setInputValue] = useState('');
   const chatAreaRef = useRef<HTMLDivElement>(null);
   
@@ -310,6 +315,7 @@ const ChatContent: React.FC<ChatContentProps> = ({
     if (chatAreaRef.current) {
       chatAreaRef.current.scrollTop = chatAreaRef.current.scrollHeight;
     }
+    renderFlowithStyle();
   }, [messages]);
   
   const handleSend = () => {
@@ -418,12 +424,8 @@ const ChatContent: React.FC<ChatContentProps> = ({
       );
     });
 
-    const FlowContainer = styled.div`
-      width: 100%;
-      height: 500px;
-    `;
     // 将消息转换为节点
-    const nodes: Node[] = [
+    const newNodes: Node[] = [
       {
         id: '0',
         role: 'user',
@@ -442,9 +444,10 @@ const ChatContent: React.FC<ChatContentProps> = ({
       data: message,
       position: { x: (message.role === 'user' ? index + 1.5 : index - 2) * 250, y: message.role === 'user' ? 100 : 300 },
     }));
+    setNodes(newNodes);
   
     // 创建边
-    const edges: Edge[] = assistantMessages
+    const newEdges: Edge[] = assistantMessages
       .concat(assistantMessages
         .map(message => ({
           ...message,
@@ -458,98 +461,7 @@ const ChatContent: React.FC<ChatContentProps> = ({
         target: message.id,
         type: 'smoothstep',
       }));
-      console.log('messages', messages, 'assistantMessages', assistantMessages, 'edges', edges);
-
-    const CustomNode = ({ data: message, isConnectable }) => {
-      return (
-        <ResponseBox key={message.id}>
-          <Handle
-            type="target"
-            position={Position.Top}
-            isConnectable={isConnectable}
-          />
-          <ResponseContent>
-            {message.isStreaming ? (
-              <MarkdownStyles>
-                {message.content}
-              </MarkdownStyles>
-            ) : (
-              <MarkdownStyles>{renderMessage(message)}</MarkdownStyles>
-            )}
-          </ResponseContent>
-          <ModelInfo>
-            <ModelAvatar>
-              <ModelIcon src="/gpt-icon.png" />
-              <span>GPT-4o mini</span>
-            </ModelAvatar>
-            <TimeInfo>{formatTime(message.timestamp)}</TimeInfo>
-          </ModelInfo>
-          <Handle
-            type="source"
-            position={Position.Bottom}
-            isConnectable={isConnectable}
-          />
-        </ResponseBox>
-      );
-    };
-  
-    // 然后在节点定义中使用 type: 'custom'
-    const nodeTypes = useMemo(() => ({ custom: CustomNode }), []);
-    
-    return (
-      <React.Fragment>
-        <ChatWrapper>
-          {/* <UserInputSection>
-            {companyInfo && (
-              <UserInputBox>
-                <UserInputContent>{companyInfo}</UserInputContent>
-                <UserInfo>
-                  <UserAvatar>
-                    <Avatar src="/user-avatar.png" />
-                    <span>我</span>
-                  </UserAvatar>
-                  <TimeInfo>{formatTime(firstUserMessage.timestamp)}</TimeInfo>
-                </UserInfo>
-              </UserInputBox>
-            )}
-            
-            {brandGoal && (
-              <UserInputBox>
-                <UserInputContent>{brandGoal}</UserInputContent>
-                <UserInfo>
-                  <UserAvatar>
-                    <Avatar src="/user-avatar.png" />
-                    <span>我</span>
-                  </UserAvatar>
-                  <TimeInfo>{formatTime(firstUserMessage.timestamp)}</TimeInfo>
-                </UserInfo>
-              </UserInputBox>
-            )}
-          </UserInputSection> */}
-          
-          <ResponseSection>
-          {/* {responseBoxes} */}
-            <FlowContainer>
-              <ReactFlow
-                nodes={nodes}
-                edges={edges}
-                nodeTypes={nodeTypes}
-                fitView
-              >
-              </ReactFlow>
-            </FlowContainer>
-          </ResponseSection>
-        </ChatWrapper>
-        
-        <NewChatButton
-          icon={<PlusCircleOutlined />}
-          onClick={onNewChat}
-          size="large"
-        >
-          生成新的内容
-        </NewChatButton>
-      </React.Fragment>
-    );
+      setEdges(newEdges);
   };
   
   // 修改renderTraditionalChat函数
@@ -653,11 +565,100 @@ const ChatContent: React.FC<ChatContentProps> = ({
     line-height: 1.6;
   `;
 
+  const CustomNode = ({ data: message, isConnectable }) => {
+    return (
+      <ResponseBox key={message.id}>
+        <Handle
+          type="target"
+          position={Position.Top}
+          isConnectable={isConnectable}
+        />
+        <ResponseContent>
+          {message.isStreaming ? (
+            <MarkdownStyles>
+              {message.content}
+            </MarkdownStyles>
+          ) : (
+            <MarkdownStyles>{renderMessage(message)}</MarkdownStyles>
+          )}
+        </ResponseContent>
+        <ModelInfo>
+          <ModelAvatar>
+            <ModelIcon src="/gpt-icon.png" />
+            <span>GPT-4o mini</span>
+          </ModelAvatar>
+          <TimeInfo>{formatTime(message.timestamp)}</TimeInfo>
+        </ModelInfo>
+        <Handle
+          type="source"
+          position={Position.Bottom}
+          isConnectable={isConnectable}
+        />
+      </ResponseBox>
+    );
+  };
+  
+  // 然后在节点定义中使用 type: 'custom'
+  const nodeTypes = useMemo(() => ({ custom: CustomNode }), []);
+
   return (
     <Container>
-      <ChatArea ref={chatAreaRef}>
-        {messages.length >= 2 ? renderFlowithStyle() : renderTraditionalChat()}
-      </ChatArea>
+      {/* <ChatArea ref={chatAreaRef}> */}
+        <div ref={chatAreaRef} style={{
+          flex: 1,
+          overflowY: 'auto',
+          padding: '20px',
+          width: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center'
+        }}>
+          {/* {messages.length >= 2 ? renderFlowithStyle() : renderTraditionalChat()} */}
+          <React.Fragment>
+            {/* <ChatWrapper> */}
+            <div style={{
+              width: '100%',
+              padding: '20px',
+              display: 'flex',
+              flexDirection: 'column',
+              position: 'relative'
+            }}>
+              {/* <ResponseSection> */}
+              <div style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                justifyContent: 'space-between',
+                gap: '20px',
+                position: 'relative',
+                zIndex: 1
+              }}>
+                <div style={{
+                  width: '100%',
+                  height: '500px'
+                }}>
+                  <ReactFlow
+                    nodes={nodes}
+                    edges={edges}
+                    nodeTypes={nodeTypes}
+                    // fitView
+                  >
+                  </ReactFlow>
+                </div>
+              </div>
+              {/* </ResponseSection> */}
+            </div>
+            {/* </ChatWrapper> */}
+        
+            <NewChatButton
+              icon={<PlusCircleOutlined />}
+              onClick={onNewChat}
+              size="large"
+            >
+              生成新的内容
+            </NewChatButton>
+        </React.Fragment>
+      </div>
+      {/* </ChatArea> */}
       
       <InputContainer>
         <StyledTextArea
