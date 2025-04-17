@@ -269,7 +269,8 @@ const TextChat: React.FC = () => {
         const updateUI = throttle((content: string) => {
           setMessages(prev => {
             const newMessages = [...prev];
-            const lastMessage = newMessages[newMessages.length - 1];
+            // const lastMessage = newMessages[newMessages.length - 1];
+            const lastMessage = newMessages.find(msg => msg.id === assistantMessage.id);
             if (lastMessage && lastMessage.role === 'assistant') {
               lastMessage.content = content;
             }
@@ -325,7 +326,8 @@ const TextChat: React.FC = () => {
           // 流式传输完成后，更新最后一条消息的状态
           setMessages(prev => {
             const newMessages = [...prev];
-            const lastMessage = newMessages[newMessages.length - 1];
+            // const lastMessage = newMessages[newMessages.length - 1];
+            const lastMessage = newMessages.find(msg => msg.id === assistantMessage.id);
             if (lastMessage && lastMessage.role === 'assistant') {
               lastMessage.isStreaming = false;
             }
@@ -436,7 +438,8 @@ const TextChat: React.FC = () => {
         setMessages(prev => {
           const newMessages = [...prev];
           const index = prev.findIndex(msg => msg.id === selectedMessageId);
-          const lastMessage = newMessages[index + 2];
+          // const lastMessage = newMessages[index + 2];
+          const lastMessage = newMessages.find(msg => msg.id === assistantMessage.id);
           if (lastMessage && lastMessage.role === 'assistant') {
             lastMessage.content = content;
           }
@@ -493,7 +496,8 @@ const TextChat: React.FC = () => {
         setMessages(prev => {
           const newMessages = [...prev];
           const index = prev.findIndex(msg => msg.id === selectedMessageId);
-          const lastMessage = newMessages[index + 2];
+          // const lastMessage = newMessages[index + 2];
+          const lastMessage = newMessages.find(msg => msg.id === assistantMessage.id);
           if (lastMessage && lastMessage.role === 'assistant') {
             lastMessage.isStreaming = false;
           }
