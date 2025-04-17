@@ -363,7 +363,7 @@ const ChatContent: React.FC<ChatContentProps> = ({
     
     return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false })}`;
   };
-  
+
   const renderFlowithStyle = () => {
     if (messages.length < 2) return null;
     
@@ -382,48 +382,6 @@ const ChatContent: React.FC<ChatContentProps> = ({
     const companyInfo = companyInfoMatch ? companyInfoMatch[1] : "";
     const brandGoal = brandGoalMatch ? brandGoalMatch[1] : "";
     
-    // 渲染5个助手消息
-    const responseBoxes = assistantMessages.map((message, index) => {
-      const isStreaming = message.isStreaming;
-      const content = message.content;
-      
-      return (
-        <ResponseBox key={message.id}>
-          <ResponseContent>
-            {isStreaming ? (
-              <MarkdownStyles>
-                {content}
-              </MarkdownStyles>
-            ) : (
-              <MarkdownStyles>{renderMessage(message, index)}</MarkdownStyles>
-            )}
-            <MessageActions>
-              <Button 
-                type="text" 
-                icon={<ReloadOutlined />} 
-                onClick={() => onRegenerateMessage(index)}
-              />
-              <Button 
-                type="text" 
-                icon={<CopyOutlined />} 
-                onClick={() => {
-                  navigator.clipboard.writeText(content);
-                  antMessage.success('已复制到剪贴板');
-                }}
-              />
-            </MessageActions>
-          </ResponseContent>
-          <ModelInfo>
-            <ModelAvatar>
-              <ModelIcon src="/gpt-icon.png" />
-              <span>GPT-4o mini</span>
-            </ModelAvatar>
-            <TimeInfo>{formatTime(message.timestamp)}</TimeInfo>
-          </ModelInfo>
-        </ResponseBox>
-      );
-    });
-
     // 将消息转换为节点
     const newNodes: Node[] = [
       {
@@ -640,7 +598,8 @@ const ChatContent: React.FC<ChatContentProps> = ({
                     nodes={nodes}
                     edges={edges}
                     nodeTypes={nodeTypes}
-                    // fitView
+                    zoomOnScroll={false}
+                    preventScrolling={false}
                   >
                   </ReactFlow>
                 </div>

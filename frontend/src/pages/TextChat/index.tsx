@@ -10,6 +10,7 @@ import { v4 as uuidv4 } from 'uuid';
 import chatApi from '../../services/chatApi';
 import { SendOutlined, DeleteOutlined, MessageOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
+import { throttle } from 'lodash';
 
 // 添加所有缺失的样式组件
 const ChatContainer = styled.div`
@@ -265,7 +266,7 @@ const TextChat: React.FC = () => {
         const accumulator = { content: '' };
         
         // 创建一个更新UI的函数
-        const updateUI = (content: string) => {
+        const updateUI = throttle((content: string) => {
           setMessages(prev => {
             const newMessages = [...prev];
             const lastMessage = newMessages[newMessages.length - 1];
@@ -274,7 +275,7 @@ const TextChat: React.FC = () => {
             }
             return newMessages;
           });
-        };
+        }, 500);
         
         // 流式读取响应
         try {
@@ -431,7 +432,7 @@ const TextChat: React.FC = () => {
       const accumulator = { content: '' };
       
       // 创建一个更新UI的函数
-      const updateUI = (content: string) => {
+      const updateUI = throttle((content: string) => {
         setMessages(prev => {
           const newMessages = [...prev];
           const index = prev.findIndex(msg => msg.id === selectedMessageId);
@@ -441,7 +442,7 @@ const TextChat: React.FC = () => {
           }
           return newMessages;
         });
-      };
+      }, 500);
       
       // 流式读取响应
       try {
