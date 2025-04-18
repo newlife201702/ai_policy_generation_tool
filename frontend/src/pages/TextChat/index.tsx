@@ -20,25 +20,23 @@ const ChatContainer = styled.div`
 `;
 
 const ChatPanel = styled.div`
+  position: relative;
   flex: 1;
-  display: flex;
-  flex-direction: column;
   height: 100%;
 `;
 
 const ChatHeader = styled.div`
+  position: absolute;
+  top: 0px;
+  left: 0px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
+  width: 100%;
+  height: 56px;
+  background-color: #f0f2f5;
   border-bottom: 1px solid #e8e8e8;
-`;
-
-const ChatInputContainer = styled.div`
-  display: flex;
-  align-items: center;
-  padding: 12px 16px;
-  border-top: 1px solid #e8e8e8;
 `;
 
 const ChatInput = styled(Input)`

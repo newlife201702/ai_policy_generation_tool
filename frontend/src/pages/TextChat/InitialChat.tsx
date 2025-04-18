@@ -11,9 +11,10 @@ const Container = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-height: 100vh;
+  margin-top: 56px;
+  height: calc(100vh - 56px);
   padding: 20px;
-  background-image: url('/background.jpg');
+  background-image: url('../../../imgs/background.png');
   background-size: cover;
   background-position: center;
   color: white;
@@ -45,8 +46,9 @@ const ContentWrapper = styled.div`
 `;
 
 const Logo = styled.div`
-  background-color: rgba(0, 0, 0, 0.5);
+  background: linear-gradient(78deg, rgba(255, 255, 255, 0.00) 0%, rgba(255, 255, 255, 0.10) 100%), #1B1918;
   border-radius: 20px;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
   padding: 6px 16px;
   margin-bottom: 40px;
   font-size: 14px;
@@ -61,7 +63,7 @@ const MainTitle = styled.h1`
   text-align: center;
   margin-bottom: 20px;
   font-size: 36px;
-  font-weight: 600;
+  font-weight: 400;
   
   @media (max-width: 768px) {
     font-size: 24px;
@@ -71,7 +73,7 @@ const MainTitle = styled.h1`
 const Description = styled.p`
   color: #cccccc;
   text-align: center;
-  max-width: 800px;
+  max-width: 810px;
   margin-bottom: 40px;
   line-height: 1.6;
   
@@ -81,13 +83,20 @@ const Description = styled.p`
   }
 `;
 
+const InputBottomSection = styled.div`
+  padding: 8px;
+  width: 100%;
+  max-width: 1000px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.10) 100%);
+`;
+
 const InputSection = styled.div`
   display: flex;
   justify-content: center;
   gap: 20px;
   width: 100%;
-  max-width: 1000px;
-  margin-bottom: 40px;
+  margin-bottom: 8px;
   
   @media (max-width: 768px) {
     flex-direction: column;
@@ -120,6 +129,7 @@ const StyledTextArea = styled(TextArea)`
 
 const BottomSection = styled.div`
   display: flex;
+  justify-content: space-between;
   align-items: center;
   gap: 20px;
   
@@ -131,9 +141,10 @@ const BottomSection = styled.div`
 
 const ModelSelect = styled(Select)`
   width: 150px;
+  height: 40px;
   
   .ant-select-selector {
-    background-color: rgba(255, 255, 255, 0.1) !important;
+    background-color: #E5E5E5 !important;
     border: none !important;
     height: 40px !important;
     padding: 4px 11px !important;
@@ -141,7 +152,7 @@ const ModelSelect = styled(Select)`
   }
   
   .ant-select-selection-item {
-    color: white !important;
+    color: rgba(0, 7, 20, 0.62) !important;
     display: flex !important;
     align-items: center !important;
   }
@@ -155,7 +166,7 @@ const ModelIcon = styled.img`
 `;
 
 const StartButton = styled(Button)`
-  background-color: #1677ff;
+  background: rgba(163, 163, 163, 0.20);
   border: none;
   color: white;
   height: 40px;
@@ -199,7 +210,7 @@ const InitialChat: React.FC<{
   return (
     <Container>
       <ContentWrapper>
-        <Logo>AI智能生成 自助工具</Logo>
+        <Logo>AI智能生成 归纳工具</Logo>
         
         <MainTitle>帮您一键生成品牌策略</MainTitle>
         
@@ -209,51 +220,56 @@ const InitialChat: React.FC<{
           快速、高效地帮助您的品牌脱颖而出。
         </Description>
         
-        <InputSection>
-          <InputBox>
-            <StyledTextArea
-              placeholder="请输入您的公司介绍（公司介绍可包括产品介绍、核心优势、服务客户等 输入资料越详细结果会越准确）"
-              autoSize={{ minRows: 6, maxRows: 10 }}
-              value={companyInfo}
-              onChange={(e) => setCompanyInfo(e.target.value)}
-            />
-          </InputBox>
+        <InputBottomSection>
+          <InputSection>
+            <InputBox>
+              <StyledTextArea
+                placeholder="请输入您的公司介绍（公司介绍里可以包含产品介绍 核心优势 服务客户等 导入资料越详细结果会越准确)"
+                autoSize={{ minRows: 6, maxRows: 10 }}
+                value={companyInfo}
+                onChange={(e) => setCompanyInfo(e.target.value)}
+              />
+            </InputBox>
+            
+            <InputBox>
+              <StyledTextArea
+                placeholder="请输入您公司品牌线上宣传最主要的目的"
+                autoSize={{ minRows: 6, maxRows: 10 }}
+                value={brandGoal}
+                onChange={(e) => setBrandGoal(e.target.value)}
+              />
+            </InputBox>
+          </InputSection>
           
-          <InputBox>
-            <StyledTextArea
-              placeholder="请输入公司品牌相关上位目标和定位目的"
-              autoSize={{ minRows: 6, maxRows: 10 }}
-              value={brandGoal}
-              onChange={(e) => setBrandGoal(e.target.value)}
-            />
-          </InputBox>
-        </InputSection>
-        
-        <BottomSection>
-          <ModelSelect
-            value={model}
-            onChange={(value) => setModel(value)}
-            dropdownStyle={{ backgroundColor: '#1a1a1a' }}
-          >
-            <Option value="deepseek">
-              <ModelIcon src="/deepseek-icon.png" />Deepseek
-            </Option>
-            <Option value="gpt4">
-              <ModelIcon src="/gpt-icon.png" />GPT-4o mini
-            </Option>
-          </ModelSelect>
-          
-          <StartButton
-            onClick={() => {
-              console.log('点击了生成品牌策略按钮');
-              handleGenerateStrategy();
-            }}
-            loading={loading}
-            type="primary"
-          >
-            生成品牌策略
-          </StartButton>
-        </BottomSection>
+          <BottomSection>
+            <ModelSelect
+              value={model}
+              onChange={(value) => setModel(value)}
+            >
+              <Option value="deepseek">
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <ModelIcon src="../../../imgs/deepseek-icon.png" />Deepseek
+                </div>
+              </Option>
+              <Option value="gpt4">
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <ModelIcon src="../../../imgs/gpt-icon.png" />GPT-4o mini
+                </div>
+              </Option>
+            </ModelSelect>
+            
+            <StartButton
+              onClick={() => {
+                console.log('点击了生成品牌策略按钮');
+                handleGenerateStrategy();
+              }}
+              loading={loading}
+              type="primary"
+            >
+              一键生成品牌线上化生态策略 ↵
+            </StartButton>
+          </BottomSection>
+        </InputBottomSection>
       </ContentWrapper>
     </Container>
   );

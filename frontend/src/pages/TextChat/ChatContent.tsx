@@ -31,10 +31,9 @@ interface ExtendedMessage extends Message {
 const { TextArea } = Input;
 
 const Container = styled.div`
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background: linear-gradient(135deg, #041424 0%, #0a2a43 100%);
+  margin-top: 56px;
+  height: calc(100vh - 56px);
+  background-color: black;
   color: white;
   position: relative;
 `;
@@ -108,10 +107,15 @@ const ResponseSection = styled.div`
   z-index: 1;
 `;
 
+const FlowContainer = styled.div`
+  width: 100%;
+  height: calc(100vh - 128px);
+`;
+
 const ResponseBox = styled.div`
   max-width: 200px;
   min-width: 200px;
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: #434343;
   border-radius: 8px;
   padding: 20px;
   margin-bottom: 30px;
@@ -203,6 +207,7 @@ const InputContainer = styled.div`
   max-width: 1000px;
   margin: 0 auto;
   width: 100%;
+  height: 72px;
 `;
 
 const StyledTextArea = styled(TextArea)`
@@ -234,10 +239,14 @@ const SendButton = styled(Button)`
 `;
 
 const NewChatButton = styled(Button)`
+  position: absolute;
+  bottom: 72px;
+  left: calc(50% - 76px);
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 20px auto;
+  width: 152px;
   background-color: rgba(0, 0, 0, 0.3);
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -561,63 +570,27 @@ const ChatContent: React.FC<ChatContentProps> = ({
 
   return (
     <Container>
-      {/* <ChatArea ref={chatAreaRef}> */}
-        <div ref={chatAreaRef} style={{
-          flex: 1,
-          overflowY: 'auto',
-          padding: '20px',
-          width: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center'
-        }}>
-          {/* {messages.length >= 2 ? renderFlowithStyle() : renderTraditionalChat()} */}
-          <React.Fragment>
-            {/* <ChatWrapper> */}
-            <div style={{
-              width: '100%',
-              padding: '20px',
-              display: 'flex',
-              flexDirection: 'column',
-              position: 'relative'
-            }}>
-              {/* <ResponseSection> */}
-              <div style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                justifyContent: 'space-between',
-                gap: '20px',
-                position: 'relative',
-                zIndex: 1
-              }}>
-                <div style={{
-                  width: '100%',
-                  height: '500px'
-                }}>
-                  <ReactFlow
-                    nodes={nodes}
-                    edges={edges}
-                    nodeTypes={nodeTypes}
-                    zoomOnScroll={false}
-                    preventScrolling={false}
-                  >
-                  </ReactFlow>
-                </div>
-              </div>
-              {/* </ResponseSection> */}
-            </div>
-            {/* </ChatWrapper> */}
-        
-            <NewChatButton
-              icon={<PlusCircleOutlined />}
-              onClick={onNewChat}
-              size="large"
-            >
-              生成新的内容
-            </NewChatButton>
-        </React.Fragment>
-      </div>
-      {/* </ChatArea> */}
+      {/* {messages.length >= 2 ? renderFlowithStyle() : renderTraditionalChat()} */}
+      <FlowContainer>
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          nodeTypes={nodeTypes}
+          zoomOnScroll={false}
+          preventScrolling={false}
+          panOnScroll={true}
+          panOnScrollMode="vertical"
+        >
+        </ReactFlow>
+      </FlowContainer>
+  
+      <NewChatButton
+        icon={<PlusCircleOutlined />}
+        onClick={onNewChat}
+        size="large"
+      >
+        生成新的内容
+      </NewChatButton>
       
       <InputContainer>
         <StyledTextArea
