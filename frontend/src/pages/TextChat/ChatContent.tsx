@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { Input, Button, message as antMessage, Spin } from 'antd';
 import {
   SendOutlined,
@@ -374,11 +374,10 @@ const ChatContent: React.FC<ChatContentProps> = ({
   };
 
   const renderFlowithStyle = () => {
-    if (messages.length < 2) return null;
     
     // 找到用户消息和助手消息
     const userMessages = messages.filter(msg => msg.role === 'user' && !msg.hidden);
-    const assistantMessages = messages.filter(msg => msg.role === 'assistant');
+    const assistantMessages = messages.filter(msg => !msg.hidden);
     
     if (userMessages.length === 0 || assistantMessages.length === 0) return null;
     
@@ -405,17 +404,59 @@ const ChatContent: React.FC<ChatContentProps> = ({
         content: brandGoal,
         timestamp: firstUserMessage.timestamp
       }
-    ].concat(assistantMessages).map((message, index) => ({
-      id: message.id,
-      type: 'custom',
-      data: message,
-      position: { x: (message.role === 'user' ? index + 1.5 : index - 2) * 250, y: message.role === 'user' ? 100 : 300 },
-    }));
+    ].concat(assistantMessages.slice(1)).map((message, index) => {
+      let x = 0;
+      let y = 0;
+      // 节点宽度和间距
+      const nodeWidth = 200;
+      const gap = 100; // 节点之间的间距
+      const gapY = 100; // 节点之间的间距
+      // 获取视口尺寸（这里容器占满整个视口）
+      const viewportWidth = window.innerWidth;
+      // 计算中心点
+      const centerX = viewportWidth / 2;
+      if (index < 2) {
+        // 计算两个节点的总宽度（包括间距）
+        const totalWidth = nodeWidth * 2 + gap * 1;
+        // 计算节点位置
+        const leftNodeX = centerX - totalWidth / 2;
+        x = leftNodeX + index * (nodeWidth + gap);
+        y = 100;
+      } else if (index < 7) {
+        if (message.parentId) {
+          const parentNode = nodes.find(item => item.id === message.parentId);
+          const nodeElement0 = document.querySelector(`[data-id="0"]`);
+          const nodeHeight0 = nodeElement0?.offsetHeight || 0;
+          const nodeElement1 = document.querySelector(`[data-id="1"]`);
+          const nodeHeight1 = nodeElement1?.offsetHeight || 0;
+          // 计算五个节点的总宽度（包括间距）
+          const totalWidth = nodeWidth * 5 + gap * 4;
+          // 计算节点位置
+          const leftNodeX = centerX - totalWidth / 2;
+          x = leftNodeX + (index - 2) * (nodeWidth + gap);
+          y = parentNode.position.y + Math.max(nodeHeight0, nodeHeight1) + gapY;
+        }
+      } else {
+        if (message.parentId) {
+          const parentNode = nodes.find(item => item.id === message.parentId);
+          const nodeElement = document.querySelector(`[data-id="${parentNode.id}"]`);
+          const nodeHeight = nodeElement?.offsetHeight || 0;
+          x = parentNode.position.x;
+          y = parentNode.position.y +nodeHeight + gapY;
+        }
+      }
+      return {
+        id: message.id,
+        type: 'custom',
+        data: message,
+        position: { x, y }
+      };
+    });
     setNodes(newNodes);
   
     // 创建边
     const newEdges: Edge[] = assistantMessages
-      .concat(assistantMessages
+      .concat(assistantMessages.filter(item => item.parentId === '0')
         .map(message => ({
           ...message,
           parentId: '1'
@@ -532,7 +573,7 @@ const ChatContent: React.FC<ChatContentProps> = ({
     line-height: 1.6;
   `;
 
-  const CustomNode = ({ data: message, isConnectable }) => {
+  const CustomNode = useCallback(({ data: message, isConnectable }) => {
     return (
       <ResponseBox key={message.id}>
         <Handle
@@ -563,7 +604,7 @@ const ChatContent: React.FC<ChatContentProps> = ({
         />
       </ResponseBox>
     );
-  };
+  }, []);
   
   // 然后在节点定义中使用 type: 'custom'
   const nodeTypes = useMemo(() => ({ custom: CustomNode }), []);
