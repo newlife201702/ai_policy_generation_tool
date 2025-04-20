@@ -1,10 +1,9 @@
-import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Input, Button, message as antMessage, Spin } from 'antd';
 import {
   SendOutlined,
   ReloadOutlined,
   CopyOutlined,
-  PlusCircleOutlined
 } from '@ant-design/icons';
 import styled from 'styled-components';
 import ReactMarkdown from 'react-markdown';
@@ -115,9 +114,10 @@ const FlowContainer = styled.div`
 const ResponseBox = styled.div`
   max-width: 200px;
   min-width: 200px;
-  background-color: #434343;
-  border-radius: 8px;
-  padding: 20px;
+  background-color: #171717;
+  border-radius: 24px;
+  border: 2px solid #262626;
+  padding: 8px;
   margin-bottom: 30px;
   position: relative;
   font-size: 12px;
@@ -125,10 +125,17 @@ const ResponseBox = styled.div`
   @media (max-width: 768px) {
     width: 100%;
   }
+    
+  &:hover {
+    border-color: #C9FF85 !important;
+  }
 `;
 
 const ResponseContent = styled.div`
   margin-bottom: 15px;
+  padding: 8px;
+  background-color: #434343;
+  border-radius: 16px;
 `;
 
 const ModelInfo = styled.div`
@@ -140,6 +147,9 @@ const ModelInfo = styled.div`
 const ModelAvatar = styled.div`
   display: flex;
   align-items: center;
+  padding: 3px 6px;
+  border-radius: 9999px;
+  background: #262626;
 `;
 
 const ModelIcon = styled.img`
@@ -247,12 +257,12 @@ const NewChatButton = styled(Button)`
   justify-content: center;
   margin: 20px auto;
   width: 152px;
-  background-color: rgba(0, 0, 0, 0.3);
+  background-color: rgb(0, 0, 0);
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.2);
   
   &:hover {
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgb(0, 0, 0);
     color: white;
     border-color: rgba(255, 255, 255, 0.3);
   }
@@ -314,7 +324,7 @@ const ChatContent: React.FC<ChatContentProps> = ({
   onSelectMessage,
   selectedMessageId
 }) => {
-  const [nodes, setNodes] = useNodesState([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges] = useEdgesState([]);
   const [inputValue, setInputValue] = useState('');
   const chatAreaRef = useRef<HTMLDivElement>(null);
@@ -468,6 +478,7 @@ const ChatContent: React.FC<ChatContentProps> = ({
         source: message.parentId,
         target: message.id,
         type: 'smoothstep',
+        animated: true,
       }));
       setEdges(newEdges);
   };
@@ -497,7 +508,7 @@ const ChatContent: React.FC<ChatContentProps> = ({
     
     const isSelected = message.id === selectedMessageId;
     
-    if (message.role === 'user') {
+    if (message.role === 'user' && (message.id === '0' || message.id === '1')) {
       return (
         <MessageWrapper 
           key={message.id}
@@ -516,7 +527,6 @@ const ChatContent: React.FC<ChatContentProps> = ({
         key={message.id}
         isUser={false}
         isSelected={isSelected}
-        onClick={() => onSelectMessage(message.id)}
       >
         <MessageContent>
           <MarkdownStyles>{message.content}</MarkdownStyles>
@@ -547,17 +557,9 @@ const ChatContent: React.FC<ChatContentProps> = ({
   // 添加选中的样式
   const MessageWrapper = styled.div<{ isUser: boolean; isSelected: boolean }>`
     display: flex;
-    justify-content: ${props => props.isUser ? 'flex-end' : 'flex-start'};
     margin: 8px 0;
-    padding: 8px;
     border-radius: 8px;
-    background-color: ${props => props.isSelected ? '#e6f7ff' : 'transparent'};
-    border: ${props => props.isSelected ? '1px solid #1890ff' : 'none'};
     cursor: ${props => !props.isUser ? 'pointer' : 'default'};
-    
-    &:hover {
-      background-color: ${props => !props.isUser ? '#f5f5f5' : 'transparent'};
-    }
   `;
 
   const MessageContent = styled.div`
@@ -573,9 +575,15 @@ const ChatContent: React.FC<ChatContentProps> = ({
     line-height: 1.6;
   `;
 
-  const CustomNode = useCallback(({ data: message, isConnectable }) => {
+  const CustomNode = ({ data: message, isConnectable, selected }) => {
     return (
-      <ResponseBox key={message.id}>
+      <ResponseBox
+        key={message.id}
+        style={{ borderColor: selected ? '#C9FF85' : 'transparent' }}
+        onClick={() => {
+          onSelectMessage(message.id);
+        }}
+      >
         <Handle
           type="target"
           position={Position.Top}
@@ -592,8 +600,8 @@ const ChatContent: React.FC<ChatContentProps> = ({
         </ResponseContent>
         <ModelInfo>
           <ModelAvatar>
-            <ModelIcon src="/gpt-icon.png" />
-            <span>GPT-4o mini</span>
+            <ModelIcon src={message.role === 'user' ? '../../../imgs/user.svg' : (message.model === 'deepseek' ? '../../../imgs/deepseek-icon.png' : '../../../imgs/gpt-icon.png')} />
+            <span>{message.role === 'user' ? '我' : message.model}</span>
           </ModelAvatar>
           <TimeInfo>{formatTime(message.timestamp)}</TimeInfo>
         </ModelInfo>
@@ -604,7 +612,7 @@ const ChatContent: React.FC<ChatContentProps> = ({
         />
       </ResponseBox>
     );
-  }, []);
+  };
   
   // 然后在节点定义中使用 type: 'custom'
   const nodeTypes = useMemo(() => ({ custom: CustomNode }), []);
@@ -621,16 +629,16 @@ const ChatContent: React.FC<ChatContentProps> = ({
           preventScrolling={false}
           panOnScroll={true}
           panOnScrollMode="vertical"
+          onNodesChange={onNodesChange}
         >
         </ReactFlow>
       </FlowContainer>
   
       <NewChatButton
-        icon={<PlusCircleOutlined />}
         onClick={onNewChat}
         size="large"
       >
-        生成新的内容
+        生成新的内容 ↵
       </NewChatButton>
       
       <InputContainer>

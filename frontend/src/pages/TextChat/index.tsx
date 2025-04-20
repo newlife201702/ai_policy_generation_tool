@@ -196,145 +196,151 @@ const TextChat: React.FC = () => {
         hidden: false, // 添加hidden属性，表示不显示
         parentId: undefined
       }]);
+      await sleep(500);
       
-      setTimeout(async () => {
-        // 创建5个独立的对话
-        for (let i = 0; i < contents.length; i++) {
-          const content = contents[i];
-          
-          // 添加用户消息（但不显示）
-          const userMessage: ExtendedMessage = {
-            id: uuidv4(),
-            role: 'user',
-            content: content,
-            timestamp: new Date().toISOString(),
-            hidden: true, // 添加hidden属性，表示不显示
-            parentId: undefined
-          };
-          
-          // 添加初始的助手消息
-          const assistantMessage: ExtendedMessage = {
-            id: uuidv4(),
-            role: 'assistant',
-            content: '',
-            timestamp: new Date().toISOString(),
-            isStreaming: true,
-            parentId: '0'
-          };
-          
-          // 添加消息到列表
-          setMessages(prev => [...prev, userMessage, assistantMessage]);
-          
-          // 准备请求数据
-          const requestData = {
-            messages: [
-              {
-                role: 'user', 
-                content,
-                timestamp: userMessage.timestamp
-              }
-            ],
-            model: selectedModel,
-            id: assistantMessage.id,
-            parentId: '0'
-          };
-          
-          // 发送请求
-          const response = await fetch('/api/chat/text/stream', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(requestData)
+      // 创建5个独立的对话
+      for (let i = 0; i < contents.length; i++) {
+        const content = contents[i];
+        
+        // 添加用户消息（但不显示）
+        const userMessage: ExtendedMessage = {
+          id: uuidv4(),
+          role: 'user',
+          content: content,
+          timestamp: new Date().toISOString(),
+          hidden: true, // 添加hidden属性，表示不显示
+          parentId: undefined
+        };
+        
+        // 添加初始的助手消息
+        const assistantMessage: ExtendedMessage = {
+          id: uuidv4(),
+          role: 'assistant',
+          content: '',
+          timestamp: new Date().toISOString(),
+          isStreaming: true,
+          parentId: '0',
+          model: selectedModel,
+        };
+        
+        // 添加消息到列表
+        setMessages(prev => [...prev, userMessage, assistantMessage]);
+        
+        // 准备请求数据
+        const requestData = {
+          messages: [
+            ...messagesRef.current.map(msg => ({
+              role: msg.role,
+              content: msg.content,
+              timestamp: msg.timestamp
+            })),
+            {
+              role: 'user',
+              // content,
+              content: content + '150字以内',
+              timestamp: userMessage.timestamp
+            }
+          ],
+          model: selectedModel,
+          id: assistantMessage.id,
+          parentId: '0'
+        };
+        
+        // 发送请求
+        const response = await fetch('/api/chat/text/stream', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(requestData)
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        // 流式传输处理逻辑
+        const reader = response.body?.getReader();
+        if (!reader) {
+          throw new Error('无法获取响应流');
+        }
+        
+        // 读取流式数据
+        const decoder = new TextDecoder();
+        let done = false;
+        const accumulator = { content: '' };
+        
+        // 创建一个更新UI的函数
+        const updateUI = throttle((content: string) => {
+          setMessages(prev => {
+            const newMessages = [...prev];
+            // const lastMessage = newMessages[newMessages.length - 1];
+            const lastMessage = newMessages.find(msg => msg.id === assistantMessage.id);
+            if (lastMessage && lastMessage.role === 'assistant') {
+              lastMessage.content = content;
+            }
+            return newMessages;
           });
-          
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          
-          // 流式传输处理逻辑
-          const reader = response.body?.getReader();
-          if (!reader) {
-            throw new Error('无法获取响应流');
-          }
-          
-          // 读取流式数据
-          const decoder = new TextDecoder();
-          let done = false;
-          const accumulator = { content: '' };
-          
-          // 创建一个更新UI的函数
-          const updateUI = throttle((content: string) => {
-            setMessages(prev => {
-              const newMessages = [...prev];
-              // const lastMessage = newMessages[newMessages.length - 1];
-              const lastMessage = newMessages.find(msg => msg.id === assistantMessage.id);
-              if (lastMessage && lastMessage.role === 'assistant') {
-                lastMessage.content = content;
-              }
-              return newMessages;
-            });
-          }, 500);
-          
-          // 流式读取响应
-          try {
-            while (!done) {
-              const { value, done: readerDone } = await reader.read();
-              done = readerDone;
+        }, 500);
+        
+        // 流式读取响应
+        try {
+          while (!done) {
+            const { value, done: readerDone } = await reader.read();
+            done = readerDone;
+            
+            if (value) {
+              const text = decoder.decode(value, { stream: !done });
+              // console.log('收到数据块:', text.substring(0, 50) + (text.length > 50 ? '...' : ''));
               
-              if (value) {
-                const text = decoder.decode(value, { stream: !done });
-                // console.log('收到数据块:', text.substring(0, 50) + (text.length > 50 ? '...' : ''));
-                
-                // 处理SSE数据
-                const lines = text.split('\n').filter(line => line.trim() !== '');
-                
-                for (const line of lines) {
-                  if (line.startsWith('data:')) {
-                    try {
-                      const jsonStr = line.substring(5).trim();
-                      if (jsonStr === '[DONE]') {
-                        console.log('收到完成标志');
-                        continue;
-                      }
-                      
-                      const jsonData = JSON.parse(jsonStr);
-                      
-                      if (jsonData.error) {
-                        console.error('服务器返回错误:', jsonData.error);
-                        throw new Error(jsonData.error);
-                      }
-                      
-                      if (jsonData.content) {
-                        accumulator.content += jsonData.content;
-                        // console.log('累积内容长度:', accumulator.content.length);
-                        // 立即更新UI
-                        updateUI(accumulator.content);
-                      }
-                    } catch (e) {
-                      console.error('解析SSE数据失败:', e, line);
+              // 处理SSE数据
+              const lines = text.split('\n').filter(line => line.trim() !== '');
+              
+              for (const line of lines) {
+                if (line.startsWith('data:')) {
+                  try {
+                    const jsonStr = line.substring(5).trim();
+                    if (jsonStr === '[DONE]') {
+                      console.log('收到完成标志');
+                      continue;
                     }
+                    
+                    const jsonData = JSON.parse(jsonStr);
+                    
+                    if (jsonData.error) {
+                      console.error('服务器返回错误:', jsonData.error);
+                      throw new Error(jsonData.error);
+                    }
+                    
+                    if (jsonData.content) {
+                      accumulator.content += jsonData.content;
+                      // console.log('累积内容长度:', accumulator.content.length);
+                      // 立即更新UI
+                      updateUI(accumulator.content);
+                    }
+                  } catch (e) {
+                    console.error('解析SSE数据失败:', e, line);
                   }
                 }
               }
             }
-          } catch (error) {
-            console.error('流式读取过程中出错:', error);
-          } finally {
-            // 流式传输完成后，更新最后一条消息的状态
-            setMessages(prev => {
-              const newMessages = [...prev];
-              // const lastMessage = newMessages[newMessages.length - 1];
-              const lastMessage = newMessages.find(msg => msg.id === assistantMessage.id);
-              if (lastMessage && lastMessage.role === 'assistant') {
-                lastMessage.isStreaming = false;
-              }
-              return newMessages;
-            });
           }
+        } catch (error) {
+          console.error('流式读取过程中出错:', error);
+        } finally {
+          // 流式传输完成后，更新最后一条消息的状态
+          setMessages(prev => {
+            const newMessages = [...prev];
+            // const lastMessage = newMessages[newMessages.length - 1];
+            const lastMessage = newMessages.find(msg => msg.id === assistantMessage.id);
+            if (lastMessage && lastMessage.role === 'assistant') {
+              lastMessage.isStreaming = false;
+            }
+            return newMessages;
+          });
         }
-      }, 500);
+      }
     } catch (error) {
       console.error('开始对话失败:', error);
       message.error('开始对话失败');
@@ -342,6 +348,9 @@ const TextChat: React.FC = () => {
       setLoading(false);
     }
   };
+
+  // 定义一个睡眠函数
+  const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
   
   // 发送新消息
   const handleSendMessage = async (content: string) => {
@@ -358,6 +367,9 @@ const TextChat: React.FC = () => {
       timestamp: new Date().toISOString(),
       parentId: selectedMessageId
     };
+
+    setMessages(prev => [...prev, userMessage]);
+    await sleep(500);
     
     // 添加初始的助手消息
     const assistantMessage: ExtendedMessage = {
@@ -366,23 +378,24 @@ const TextChat: React.FC = () => {
       content: '',
       timestamp: new Date().toISOString(),
       isStreaming: true,
-      parentId: userMessage.id
+      parentId: userMessage.id,
+      model: model,
     };
     
     // 如果选择了消息，将新消息插入到选中消息之后
     if (selectedMessageId) {
       setMessages(prev => {
         const index = prev.findIndex(msg => msg.id === selectedMessageId);
-        if (index === -1) return [...prev, userMessage, assistantMessage];
-        return [
-          ...prev.slice(0, index + 1),
-          userMessage,
-          assistantMessage,
-          ...prev.slice(index + 1)
-        ];
+        if (index === -1) return [...prev, assistantMessage];
+        // return [
+        //   ...prev.slice(0, index + 1),
+        //   assistantMessage,
+        //   ...prev.slice(index + 1)
+        // ];
+        return [...prev, assistantMessage];
       });
     } else {
-      setMessages(prev => [...prev, userMessage, assistantMessage]);
+      setMessages(prev => [...prev, assistantMessage]);
     }
     
     try {
@@ -396,8 +409,9 @@ const TextChat: React.FC = () => {
           })),
           { 
             id: userMessage.id,
-            role: 'user', 
-            content,
+            role: 'user',
+            // content, 
+            content: content + '150字以内',
             timestamp: userMessage.timestamp,
             parentId: selectedMessageId
           }
