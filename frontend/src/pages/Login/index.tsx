@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { Tabs, Form, Input, Button, message, Space } from 'antd';
+import { Tabs, Form, Input, Button, message, Space, ConfigProvider, theme } from 'antd';
 import styled from 'styled-components';
 import { setCredentials, logout } from '@/store/slices/authSlice';
 import { api } from '@/services/api';
@@ -13,40 +13,68 @@ const LoginContainer = styled.div`
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background-color: #f0f2f5;
+  background-image: url('../../../imgs/background.png');
+  background-size: cover;
+  background-position: center;
+  color: #ffffff;
 `;
 
 const LoginCard = styled.div`
   width: 100%;
   max-width: 400px;
   padding: 32px;
-  background: #fff;
+  background: transparent;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 `;
 
 const Title = styled.h1`
   text-align: center;
   margin-bottom: 32px;
-  color: #1f1f1f;
+  font-weight: 400;
 `;
 
 const StyledTabs = styled(Tabs)`
   .ant-tabs-nav {
     margin-bottom: 24px;
   }
+  
+  .ant-tabs-tab {
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 16px;
+    
+    &.ant-tabs-tab-active .ant-tabs-tab-btn {
+      color: #ffffff;
+    }
+  }
+  
+  .ant-tabs-ink-bar {
+    background-color: #ffffff;
+  }
+`;
+
+const VerifyButton = styled(Button)`
+  color: #000000 !important;
+  background-color: #ffffff !important;
+  border: none;
+  height: 40px;
+`;
+
+const LoginButton = styled(Button)`
+  color: #000000 !important;
+  background-color: #ffffff !important;
+  border: none;
+  height: 40px;
 `;
 
 const Agreement = styled.div`
   margin-top: 16px;
   text-align: center;
-  color: #666;
+  color: #F9FBFC;
   font-size: 14px;
+  
   a {
-    color: #1890ff;
-    &:hover {
-      text-decoration: underline;
-    }
+    color: #C9FF85;
+    text-decoration: none;
   }
 `;
 
@@ -56,6 +84,7 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
+  const [loginLoading, setLoginLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [activeTab, setActiveTab] = useState('phone');
 
@@ -120,7 +149,7 @@ const Login: React.FC = () => {
 
   const handleLogin = async (values: any) => {
     try {
-      setLoading(true);
+      setLoginLoading(true);
       console.log('开始登录流程');
       console.log('当前激活的标签页:', activeTab);
       console.log('表单值:', values);
@@ -175,7 +204,7 @@ const Login: React.FC = () => {
         message.error('登录失败，请稍后重试');
       }
     } finally {
-      setLoading(false);
+      setLoginLoading(false);
     }
   };
 
@@ -200,7 +229,7 @@ const Login: React.FC = () => {
           >
             <Input
               prefix={<UserOutlined />}
-              placeholder="手机号"
+              placeholder="请输入手机号码"
               size="large"
             />
           </Form.Item>
@@ -216,12 +245,12 @@ const Login: React.FC = () => {
               >
                 <Input
                   prefix={<LockOutlined />}
-                  placeholder="验证码"
+                  placeholder="请输入验证码"
                   size="large"
                   style={{ width: 'calc(100% - 120px)' }}
                 />
               </Form.Item>
-              <Button
+              <VerifyButton
                 type="primary"
                 onClick={handleSendCode}
                 disabled={countdown > 0 || loading}
@@ -229,13 +258,13 @@ const Login: React.FC = () => {
                 style={{ width: '120px' }}
               >
                 {countdown > 0 ? `${countdown}秒后重试` : '获取验证码'}
-              </Button>
+              </VerifyButton>
             </Space.Compact>
           </Form.Item>
           <Form.Item>
-            <Button type="primary" htmlType="submit" loading={loading} block>
+            <LoginButton type="primary" htmlType="submit" loading={loginLoading} block>
               立即登录
-            </Button>
+            </LoginButton>
           </Form.Item>
         </Form>
       ),
@@ -260,7 +289,7 @@ const Login: React.FC = () => {
           >
             <Input
               prefix={<UserOutlined />}
-              placeholder="邮箱"
+              placeholder="请输入邮箱"
               size="large"
             />
           </Form.Item>
@@ -276,12 +305,12 @@ const Login: React.FC = () => {
               >
                 <Input
                   prefix={<LockOutlined />}
-                  placeholder="验证码"
+                  placeholder="请输入验证码"
                   size="large"
                   style={{ width: 'calc(100% - 120px)' }}
                 />
               </Form.Item>
-              <Button
+              <VerifyButton
                 type="primary"
                 onClick={handleSendCode}
                 disabled={countdown > 0 || loading}
@@ -289,13 +318,13 @@ const Login: React.FC = () => {
                 style={{ width: '120px' }}
               >
                 {countdown > 0 ? `${countdown}秒后重试` : '获取验证码'}
-              </Button>
+              </VerifyButton>
             </Space.Compact>
           </Form.Item>
           <Form.Item>
-            <Button type="primary" htmlType="submit" loading={loading} block>
+            <LoginButton type="primary" htmlType="submit" loading={loginLoading} block>
               立即登录
-            </Button>
+            </LoginButton>
           </Form.Item>
         </Form>
       ),
@@ -303,21 +332,27 @@ const Login: React.FC = () => {
   ];
 
   return (
-    <LoginContainer>
-      <LoginCard>
-        <Title>欢迎登录</Title>
-        <StyledTabs 
-          items={items} 
-          onChange={handleTabChange}
-        />
-        <Agreement>
-          登录即代表同意
-          <a href="#" onClick={() => message.info('用户协议')}>《用户协议》</a>
-          和
-          <a href="#" onClick={() => message.info('隐私政策')}>《隐私政策》</a>
-        </Agreement>
-      </LoginCard>
-    </LoginContainer>
+    <ConfigProvider
+      theme={{
+        algorithm: theme.darkAlgorithm,
+      }}
+    >
+      <LoginContainer>
+        <LoginCard>
+          <Title>欢迎登录</Title>
+          <StyledTabs 
+            items={items} 
+            onChange={handleTabChange}
+          />
+          <Agreement>
+            登录即代表同意
+            <a href="#" onClick={(e) => { e.preventDefault(); message.info('用户协议'); }}>《用户协议》</a>
+            和
+            <a href="#" onClick={(e) => { e.preventDefault(); message.info('隐私政策'); }}>《隐私政策》</a>
+          </Agreement>
+        </LoginCard>
+      </LoginContainer>
+    </ConfigProvider>
   );
 };
 

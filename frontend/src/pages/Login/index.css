@@ -31,4 +31,31 @@
 .login-box .ant-btn {
   height: 40px;
   border-radius: 4px;
+}
+
+/* 样式现在主要通过styled-components实现 */
+.ant-tabs-nav::before {
+  border-bottom: none !important;
+}
+
+.ant-form-item-explain-error {
+  color: #ff4d4f !important;
+  margin-top: 4px;
+}
+
+.ant-tabs-tab {
+  padding: 12px 0 !important;
+}
+
+.ant-tabs-tab + .ant-tabs-tab {
+  margin-left: 32px !important;
+}
+
+/* 覆盖输入框的自动填充样式 */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: white;
+  transition: background-color 5000s ease-in-out 0s;
+  caret-color: white;
 } 
