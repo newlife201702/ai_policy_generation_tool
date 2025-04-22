@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Input, Button, message as antMessage, Spin } from 'antd';
+import { Input, Button, message as antMessage, Spin, ConfigProvider, theme } from 'antd';
 import {
   SendOutlined,
   ReloadOutlined,
@@ -30,8 +30,10 @@ interface ExtendedMessage extends Message {
 const { TextArea } = Input;
 
 const Container = styled.div`
-  margin-top: 56px;
-  height: calc(100vh - 56px);
+  // margin-top: 56px;
+  // height: calc(100vh - 56px);
+  height: calc(100vh);
+  padding-top: 56px;
   background-color: black;
   color: white;
   position: relative;
@@ -111,6 +113,16 @@ const FlowContainer = styled.div`
   height: calc(100vh - 128px);
 `;
 
+const MessageActions = styled.div`
+  position: absolute;
+  top: -35px;
+  right: 10px;
+  display: flex;
+  gap: 10px;
+  opacity: 0;
+  transition: opacity 0.2s;
+`;
+
 const ResponseBox = styled.div`
   max-width: 200px;
   min-width: 200px;
@@ -128,6 +140,9 @@ const ResponseBox = styled.div`
     
   &:hover {
     border-color: #C9FF85 !important;
+    ${MessageActions} {
+      opacity: 1; // 父组件hover时改变子组件透明度
+    }
   }
 `;
 
@@ -186,16 +201,6 @@ const BotMessage = styled.div`
   &:hover .message-actions {
     opacity: 1;
   }
-`;
-
-const MessageActions = styled.div`
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  display: flex;
-  gap: 10px;
-  opacity: 0;
-  transition: opacity 0.2s;
 `;
 
 const ActionButton = styled(Button)`
@@ -383,6 +388,10 @@ const ChatContent: React.FC<ChatContentProps> = ({
     return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false })}`;
   };
 
+  const isLeafNode = (nodeId, edges) => {
+    return !edges.some(edge => edge.source === nodeId);
+  };
+
   const renderFlowithStyle = () => {
     
     // 找到用户消息和助手消息
@@ -399,6 +408,24 @@ const ChatContent: React.FC<ChatContentProps> = ({
     
     const companyInfo = companyInfoMatch ? companyInfoMatch[1] : "";
     const brandGoal = brandGoalMatch ? brandGoalMatch[1] : "";
+  
+    // 创建边
+    const newEdges: Edge[] = assistantMessages
+      .concat(assistantMessages.filter(item => item.parentId === '0')
+        .map(message => ({
+          ...message,
+          parentId: '1'
+        }))
+      )
+      .filter(message => message.parentId)
+      .map(message => ({
+        id: `${message.parentId}-${message.id}`,
+        source: message.parentId,
+        target: message.id,
+        type: 'smoothstep',
+        animated: true,
+      }));
+      setEdges(newEdges);
     
     // 将消息转换为节点
     const newNodes: Node[] = [
@@ -459,28 +486,11 @@ const ChatContent: React.FC<ChatContentProps> = ({
         id: message.id,
         type: 'custom',
         data: message,
-        position: { x, y }
+        position: { x, y },
+        selectable: isLeafNode(message.id, newEdges)
       };
     });
     setNodes(newNodes);
-  
-    // 创建边
-    const newEdges: Edge[] = assistantMessages
-      .concat(assistantMessages.filter(item => item.parentId === '0')
-        .map(message => ({
-          ...message,
-          parentId: '1'
-        }))
-      )
-      .filter(message => message.parentId)
-      .map(message => ({
-        id: `${message.parentId}-${message.id}`,
-        source: message.parentId,
-        target: message.id,
-        type: 'smoothstep',
-        animated: true,
-      }));
-      setEdges(newEdges);
   };
   
   // 修改renderTraditionalChat函数
@@ -531,14 +541,14 @@ const ChatContent: React.FC<ChatContentProps> = ({
         <MessageContent>
           <MarkdownStyles>{message.content}</MarkdownStyles>
           <MessageActions>
-            <Button 
+            {/* <Button 
               type="text" 
               icon={<ReloadOutlined />} 
               onClick={(e) => {
                 e.stopPropagation();
                 onRegenerateMessage(message);
               }}
-            />
+            /> */}
             <Button 
               type="text" 
               icon={<CopyOutlined />} 
@@ -575,13 +585,15 @@ const ChatContent: React.FC<ChatContentProps> = ({
     line-height: 1.6;
   `;
 
-  const CustomNode = ({ data: message, isConnectable, selected }) => {
+  const CustomNode = ({ data: message, isConnectable, selectable, selected }) => {
     return (
       <ResponseBox
         key={message.id}
         style={{ borderColor: selected ? '#C9FF85' : 'transparent' }}
         onClick={() => {
-          onSelectMessage(message.id);
+          if (selectable) {
+            onSelectMessage(message.id);
+          }
         }}
       >
         <Handle
@@ -618,46 +630,52 @@ const ChatContent: React.FC<ChatContentProps> = ({
   const nodeTypes = useMemo(() => ({ custom: CustomNode }), []);
 
   return (
-    <Container>
-      {/* {messages.length >= 2 ? renderFlowithStyle() : renderTraditionalChat()} */}
-      <FlowContainer>
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          nodeTypes={nodeTypes}
-          zoomOnScroll={false}
-          preventScrolling={false}
-          panOnScroll={true}
-          panOnScrollMode="vertical"
-          onNodesChange={onNodesChange}
+    <ConfigProvider
+      theme={{
+        algorithm: theme.darkAlgorithm,
+      }}
+    >
+      <Container>
+        {/* {messages.length >= 2 ? renderFlowithStyle() : renderTraditionalChat()} */}
+        <FlowContainer>
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            nodeTypes={nodeTypes}
+            zoomOnScroll={false}
+            preventScrolling={false}
+            panOnScroll={true}
+            panOnScrollMode="vertical"
+            onNodesChange={onNodesChange}
+          >
+          </ReactFlow>
+        </FlowContainer>
+    
+        <NewChatButton
+          onClick={onNewChat}
+          size="large"
         >
-        </ReactFlow>
-      </FlowContainer>
-  
-      <NewChatButton
-        onClick={onNewChat}
-        size="large"
-      >
-        生成新的内容 ↵
-      </NewChatButton>
-      
-      <InputContainer>
-        <StyledTextArea
-          placeholder="继续输入问题..."
-          autoSize={{ minRows: 1, maxRows: 4 }}
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          onKeyDown={handleKeyDown}
-          disabled={loading}
-        />
-        <SendButton
-          type="primary"
-          icon={<SendOutlined />}
-          onClick={handleSend}
-          disabled={!inputValue.trim() || loading}
-        />
-      </InputContainer>
-    </Container>
+          生成新的内容 ↵
+        </NewChatButton>
+        
+        <InputContainer>
+          <StyledTextArea
+            placeholder="继续输入问题..."
+            autoSize={{ minRows: 1, maxRows: 4 }}
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={loading}
+          />
+          <SendButton
+            type="primary"
+            icon={<SendOutlined />}
+            onClick={handleSend}
+            disabled={!inputValue.trim() || loading}
+          />
+        </InputContainer>
+      </Container>
+    </ConfigProvider>
   );
 };
 

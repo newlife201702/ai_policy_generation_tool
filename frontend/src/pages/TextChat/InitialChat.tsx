@@ -11,9 +11,11 @@ const Container = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: 56px;
-  height: calc(100vh - 56px);
+  // margin-top: 56px;
+  // height: calc(100vh - 56px);
+  height: calc(100vh);
   padding: 20px;
+  padding-top: 56px;
   background-image: url('../../../imgs/background.png');
   background-size: cover;
   background-position: center;

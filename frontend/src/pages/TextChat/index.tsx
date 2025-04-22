@@ -35,10 +35,8 @@ const ChatHeader = styled.div`
   padding: 12px 16px;
   width: 100%;
   height: 56px;
-  // background-color: #f0f2f5;
-  // border-bottom: 1px solid #e8e8e8;
-  background-color: black;
-  border-bottom: 1px solid black;
+  background-color: #f0f2f5;
+  border-bottom: 1px solid #e8e8e8;
 `;
 
 const ChatInput = styled(Input)`
@@ -688,12 +686,12 @@ const TextChat: React.FC = () => {
       
       <ChatPanel>
         <ChatHeader>
-          {/* <Button 
+          <Button 
             type="text"
             icon={<MessageOutlined />}
             onClick={() => setShowHistory(!showHistory)}
           />
-          <ModelSelect value={model} onChange={handleModelChange} /> */}
+          <ModelSelect value={model} onChange={handleModelChange} />
         </ChatHeader>
         
         {!chatStarted ? (
