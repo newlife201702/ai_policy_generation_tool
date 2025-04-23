@@ -6,6 +6,7 @@ import { createLogger } from './utils/logger';
 import authRoutes from './routes/auth';
 import chatRoutes from './routes/chat';
 import imageGenRoutes from './routes/imageGen';
+import paymentRoutes from './routes/payment';
 import { errorHandler } from './middleware/errorHandler';
 import { env } from './config/env';
 
@@ -21,6 +22,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/image-gen', imageGenRoutes);
+app.use('/api/payment', paymentRoutes);
 
 // 错误处理
 app.use(errorHandler);

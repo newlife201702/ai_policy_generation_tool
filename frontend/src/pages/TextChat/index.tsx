@@ -6,6 +6,7 @@ import { api, fetchStreamResponse } from '../../utils/api';
 import { Message, ChatRequest, ChatResponse, HistoryItem, ChatModel } from '../../types/chat';
 import InitialChat from './InitialChat';
 import ChatContent from './ChatContent';
+import PaymentModal from '../../components/PaymentModal';
 import { v4 as uuidv4 } from 'uuid';
 import chatApi from '../../services/chatApi';
 import { SendOutlined, DeleteOutlined, MessageOutlined } from '@ant-design/icons';
@@ -708,6 +709,9 @@ const TextChat: React.FC = () => {
           />
         )}
       </ChatPanel>
+      {location.href === 'http://47.94.59.198:3000/text-chat?test=test' ? (
+        <PaymentModal visible={true} onClose={() => {}} />
+      ) : null}
     </ChatContainer>
   );
 };
