@@ -77,6 +77,7 @@ class PaymentService {
             out_trade_no: order.alipayTradeNo
           }
         });
+        console.log('result', result);
 
         logger.info('查询支付宝订单状态', {
           orderId,
@@ -85,10 +86,10 @@ class PaymentService {
         });
 
         // 更新订单状态
-        if (result.trade_status === 'TRADE_SUCCESS') {
+        if (result.tradeStatus === 'TRADE_SUCCESS') {
           order.status = 'SUCCESS';
           await order.save();
-        } else if (result.trade_status === 'TRADE_CLOSED') {
+        } else if (result.tradeStatus === 'TRADE_CLOSED') {
           order.status = 'FAILED';
           await order.save();
         }
