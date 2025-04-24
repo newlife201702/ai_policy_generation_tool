@@ -236,7 +236,8 @@ const InitialChat: React.FC<{
         // 显示支付选择弹窗
         const paymentOptions = [
           {
-            amount: 9.9,
+            // amount: 9.9,
+            amount: 0.01,
             title: '开通品牌探索流',
             type: 'brand_explorer',
             subType: 'basic',
@@ -248,7 +249,7 @@ const InitialChat: React.FC<{
             ]
           },
           {
-            amount: 9.9,
+            amount: 99,
             title: '开通品牌探索流',
             type: 'brand_explorer',
             subType: 'premium',

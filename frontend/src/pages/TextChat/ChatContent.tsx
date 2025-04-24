@@ -526,7 +526,7 @@ const ChatContent: React.FC<ChatContentProps> = ({
           isSelected={false}
         >
           <MessageContent>
-            <MarkdownStyles>{message.content}</MarkdownStyles>
+            <ReactMarkdown>{message.content}</ReactMarkdown>
           </MessageContent>
         </MessageWrapper>
       );
@@ -539,7 +539,7 @@ const ChatContent: React.FC<ChatContentProps> = ({
         isSelected={isSelected}
       >
         <MessageContent>
-          <MarkdownStyles>{message.content}</MarkdownStyles>
+          <ReactMarkdown>{message.content}</ReactMarkdown>
           <MessageActions>
             {/* <Button 
               type="text" 
@@ -603,9 +603,9 @@ const ChatContent: React.FC<ChatContentProps> = ({
         />
         <ResponseContent>
           {message.isStreaming ? (
-            <MarkdownStyles>
+            <ReactMarkdown>
               {message.content}
-            </MarkdownStyles>
+            </ReactMarkdown>
           ) : (
             <MarkdownStyles>{renderMessage(message)}</MarkdownStyles>
           )}
