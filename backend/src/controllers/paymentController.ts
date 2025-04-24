@@ -7,7 +7,7 @@ const logger = createLogger('paymentController');
 
 export const createPaymentOrder = async (req: Request<{}, {}, CreatePaymentOrderRequest>, res: Response) => {
   try {
-    const { amount } = req.body;
+    const { amount, type, subType } = req.body;
     const userId = req.user?._id;
 
     // 检查认证信息
@@ -23,7 +23,7 @@ export const createPaymentOrder = async (req: Request<{}, {}, CreatePaymentOrder
       });
     }
 
-    const result = await paymentService.createPaymentOrder(amount, userId);
+    const result = await paymentService.createPaymentOrder(amount, userId, type, subType);
 
     logger.info('创建支付订单成功', {
       userId,
@@ -102,6 +102,30 @@ export const getPaymentStatus = async (req: Request<{ orderId: string }>, res: R
       status: 'error',
       message: '查询支付状态失败'
     });
+  }
+};
+
+/**
+ * 检查服务访问权限
+ */
+export const checkServiceAccess = async (req: Request, res: Response) => {
+  try {
+    const { type } = req.query;
+    const userId = req.user!.id;
+
+    if (!type || typeof type !== 'string') {
+      return res.status(400).json({ message: '缺少必要的参数：type' });
+    }
+
+    const result = await paymentService.checkUserServiceAccess(userId, type);
+    res.json(result);
+  } catch (error) {
+    logger.error('检查服务访问权限失败', {
+      error,
+      userId: req.user!.id,
+      type: req.query.type
+    });
+    res.status(500).json({ message: '检查服务访问权限失败' });
   }
 };
 

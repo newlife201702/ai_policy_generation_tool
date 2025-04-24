@@ -16,8 +16,16 @@ const paymentOrderSchema = new mongoose.Schema({
     required: true
   },
   alipayTradeNo: {
+    type: String
+  },
+  type: {
     type: String,
-    sparse: true
+    required: true
+  },
+  subType: {
+    type: String,
+    required: true,
+    enum: ['basic', 'premium']  // basic: 基础版(9.9元), premium: 高级版(99元)
   },
   userId: {
     type: mongoose.Schema.Types.ObjectId,

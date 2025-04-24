@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { Input, Button, Select, Typography, message } from 'antd';
 import styled from 'styled-components';
 import { api } from '../../utils/api';
+import PaymentModal from '../../components/PaymentModal';
+import axios from 'axios';
+import { useAppSelector } from '../../store/hooks';
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -185,28 +188,86 @@ const StartButton = styled(Button)`
 const InitialChat: React.FC<{
   onStartChat: (messages: any[], model: string) => void;
 }> = ({ onStartChat }) => {
+  const { token } = useAppSelector((state) => state.auth);
   const [companyInfo, setCompanyInfo] = useState('');
   const [brandGoal, setBrandGoal] = useState('');
   const [model, setModel] = useState<'deepseek' | 'gpt4'>('deepseek');
   const [loading, setLoading] = useState(false);
+  const [paymentModalVisible, setPaymentModalVisible] = useState(false);
+  const [paymentOptions, setPaymentOptions] = useState([]);
+  const [currentPlan, setCurrentPlan] = useState('');
+  const [contents, setContents] = useState([]);
   
   const handleGenerateStrategy = async () => {
-    if (!companyInfo.trim() || !brandGoal.trim()) {
-      message.error('请填写公司信息和品牌宣传目的');
-      return;
+    try {
+      // 检查用户是否有权限使用服务
+      const response = await axios.get('/api/payment/check-access', {
+        params: {
+          type: 'brand_explorer'
+        },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+  
+      const { canUse, needPayment, currentPlan } = response.data;
+  
+      // 继续执行生成策略的逻辑
+      if (!companyInfo.trim() || !brandGoal.trim()) {
+        message.error('请填写公司信息和品牌宣传目的');
+        return;
+      }
+
+      // 将内容拆分成5个部分
+      const contents = [
+        `公司信息: ${companyInfo}\n品牌宣传的目的: ${brandGoal}\n请提供行业数据和市场情况分析（联网查询该行业相关信息并进行市场行业和趋势分析）。`,
+        `公司信息: ${companyInfo}\n品牌宣传的目的: ${brandGoal}\n请提供15秒黄金内容提炼 ：结合市场分析结果，提炼公司最有优势且最契合用户宣传目的的关键优势提炼最核心的内容 按内容提炼/内容层次划分/用户阅读路径三个点罗列出来，并说明为什么要这么罗列的原因。`,
+        `公司信息: ${companyInfo}\n品牌宣传的目的: ${brandGoal}\n根据罗列的内容分别说明，通过罗列的内容分别说明这些内容解决客户的哪些信任问题 （按产品信任 品牌信任 价值观信任区分）。`,
+        `公司信息: ${companyInfo}\n品牌宣传的目的: ${brandGoal}\n根据客户做大的卖点，用巅峰体验做为标题：提供视觉或者文案内容的创意达到让浏览公司品牌门户网站时，用户眼前一亮并且产生深刻记忆点，可提供多种方案。`,
+        `公司信息: ${companyInfo}\n品牌宣传的目的: ${brandGoal}\n根据以上全部内容，结合目前的网络推广途径，为客户整理出一套完善的品牌线上营销策略。`
+      ];
+      setContents(contents);
+
+      if (canUse) {
+        // 调用父组件的onStartChat函数，传入拆分后的内容
+        onStartChat(contents, model);
+      } else {
+        // 显示支付选择弹窗
+        const paymentOptions = [
+          {
+            amount: 9.9,
+            title: '开通品牌探索流',
+            type: 'brand_explorer',
+            subType: 'basic',
+            features: [
+              '可以使用思维导图生成',
+              '100次对话',
+              '可以修改内容',
+              '支持商用'
+            ]
+          },
+          {
+            amount: 9.9,
+            title: '开通品牌探索流',
+            type: 'brand_explorer',
+            subType: 'premium',
+            features: [
+              '可以使用思维导图生成',
+              '可以无限生成',
+              '可以修改内容',
+              '支持商用'
+            ]
+          }
+        ];
+
+        setPaymentModalVisible(true);
+        setPaymentOptions(paymentOptions);
+        setCurrentPlan(currentPlan);
+      }
+    } catch (error) {
+      message.error('检查服务访问权限失败');
     }
-
-    // 将内容拆分成5个部分
-    const contents = [
-      `公司信息: ${companyInfo}\n品牌宣传的目的: ${brandGoal}\n请提供行业数据和市场情况分析（联网查询该行业相关信息并进行市场行业和趋势分析）。`,
-      `公司信息: ${companyInfo}\n品牌宣传的目的: ${brandGoal}\n请提供15秒黄金内容提炼 ：结合市场分析结果，提炼公司最有优势且最契合用户宣传目的的关键优势提炼最核心的内容 按内容提炼/内容层次划分/用户阅读路径三个点罗列出来，并说明为什么要这么罗列的原因。`,
-      `公司信息: ${companyInfo}\n品牌宣传的目的: ${brandGoal}\n根据罗列的内容分别说明，通过罗列的内容分别说明这些内容解决客户的哪些信任问题 （按产品信任 品牌信任 价值观信任区分）。`,
-      `公司信息: ${companyInfo}\n品牌宣传的目的: ${brandGoal}\n根据客户做大的卖点，用巅峰体验做为标题：提供视觉或者文案内容的创意达到让浏览公司品牌门户网站时，用户眼前一亮并且产生深刻记忆点，可提供多种方案。`,
-      `公司信息: ${companyInfo}\n品牌宣传的目的: ${brandGoal}\n根据以上全部内容，结合目前的网络推广途径，为客户整理出一套完善的品牌线上营销策略。`
-    ];
-
-    // 调用父组件的onStartChat函数，传入拆分后的内容
-    onStartChat(contents, model);
   };
   
   return (
@@ -273,6 +334,16 @@ const InitialChat: React.FC<{
           </BottomSection>
         </InputBottomSection>
       </ContentWrapper>
+      <PaymentModal
+        visible={paymentModalVisible}
+        onClose={() => {}}
+        paymentOptions={paymentOptions}
+        currentPlan={currentPlan}
+        callback={() => {
+          // 调用父组件的onStartChat函数，传入拆分后的内容
+          onStartChat(contents, model);
+        }}
+      />
     </Container>
   );
 };

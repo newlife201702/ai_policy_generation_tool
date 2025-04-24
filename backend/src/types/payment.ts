@@ -9,6 +9,8 @@ export interface PaymentOrder {
 
 export interface CreatePaymentOrderRequest {
   amount: number;
+  type: string;
+  subType: string;
 }
 
 export interface CreatePaymentOrderResponse {
