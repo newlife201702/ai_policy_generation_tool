@@ -337,10 +337,11 @@ const InitialChat: React.FC<{
       </ContentWrapper>
       <PaymentModal
         visible={paymentModalVisible}
-        onClose={() => {}}
+        onClose={() => setPaymentModalVisible(false)}
         paymentOptions={paymentOptions}
         currentPlan={currentPlan}
         callback={() => {
+          setPaymentModalVisible(false);
           // 调用父组件的onStartChat函数，传入拆分后的内容
           onStartChat(contents, model);
         }}

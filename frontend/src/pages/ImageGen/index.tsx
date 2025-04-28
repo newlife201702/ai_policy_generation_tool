@@ -7,6 +7,7 @@ import { useAppSelector } from '../../store/hooks';
 import ConversationList from './components/ConversationList';
 import ImageDisplay from './components/ImageDisplay';
 import EmptyState from './components/EmptyState';
+import PaymentModal from '../../components/PaymentModal';
 
 const { Content } = Layout;
 
@@ -137,6 +138,9 @@ const ImageGen: React.FC = () => {
   const [prompt, setPrompt] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
+  const [paymentModalVisible, setPaymentModalVisible] = useState(false);
+  const [paymentOptions, setPaymentOptions] = useState([]);
+  const [currentPlan, setCurrentPlan] = useState('');
   const { token } = useAppSelector((state) => state.auth);
 
   useEffect(() => {
@@ -158,6 +162,62 @@ const ImageGen: React.FC = () => {
     if (info.file.status === 'done') {
       setImageFile(info.file.originFileObj);
       message.success('图片上传完成');
+    }
+  };
+
+  const beforeSubmit = async () => {
+    try {
+      // 检查用户是否有权限使用服务
+      const response = await axios.get('/api/payment/check-access', {
+        params: {
+          type: 'gpt4_drawing'
+        },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+  
+      const { canUse, needPayment, currentPlan } = response.data;
+      console.log('canUse', canUse, 'needPayment', needPayment, 'currentPlan', currentPlan);
+      if (canUse) {
+        handleSubmit();
+      } else {
+        // 显示支付选择弹窗
+        const paymentOptions = [
+          {
+            // amount: 19.8,
+            amount: 0.01,
+            title: '开通GPT4o绘画版',
+            type: 'gpt4_drawing',
+            subType: 'basic',
+            features: [
+            '使用gPT4o绘画',
+            '100次生图',
+            '可以修改内容',
+            '支持商用'
+            ]
+          },
+          {
+            amount: 198,
+            title: '开通GPT4o绘画版',
+            type: 'gpt4_drawing',
+            subType: 'premium',
+            features: [
+            '使用gPT4o绘画',
+            '可以无限生成',
+            '可以修改内容',
+            '支持商用'
+            ]
+          }
+        ];
+
+        setPaymentModalVisible(true);
+        setPaymentOptions(paymentOptions);
+        setCurrentPlan(currentPlan);
+      }
+    } catch (error) {
+      message.error('检查服务访问权限失败');
     }
   };
 
@@ -236,8 +296,9 @@ const ImageGen: React.FC = () => {
   };
 
   const currentConversation = conversations.find(conv => conv._id === selectedConversation);
-  console.log('conversations', conversations, 'selectedConversation', selectedConversation, 'currentConversation', currentConversation);
-  const isEmpty = conversations.length === 0;
+  // console.log('conversations', conversations, 'selectedConversation', selectedConversation, 'currentConversation', currentConversation);
+  // const isEmpty = conversations.length === 0;
+  const isEmpty = !selectedConversation;
 
   return (
     <ConfigProvider theme={{ algorithm: theme.darkAlgorithm }}>
@@ -276,11 +337,21 @@ const ImageGen: React.FC = () => {
             />
             <SendButton
               icon={<SendOutlined />}
-              onClick={handleSubmit}
+              onClick={beforeSubmit}
               disabled={loading || !prompt.trim()}
             />
           </InputArea>
         </MainContent>
+        <PaymentModal
+          visible={paymentModalVisible}
+          onClose={() => setPaymentModalVisible(false)}
+          paymentOptions={paymentOptions}
+          currentPlan={currentPlan}
+          callback={() => {
+            setPaymentModalVisible(false);
+            handleSubmit();
+          }}
+        />
       </StyledLayout>
     </ConfigProvider>
   );
