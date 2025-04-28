@@ -41,6 +41,20 @@ const List = styled.div`
   @media (max-width: 768px) {
     max-height: 200px;
   }
+
+  /* 美化滚动条 */
+  &::-webkit-scrollbar {
+    width: 6px;
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 6px;
+    transition: background 0.2s;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: #666;
+  }
 `;
 
 const ConversationItem = styled.div<{ $selected: boolean }>`

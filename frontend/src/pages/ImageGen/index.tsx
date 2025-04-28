@@ -303,11 +303,11 @@ const ImageGen: React.FC = () => {
   return (
     <ConfigProvider theme={{ algorithm: theme.darkAlgorithm }}>
       <StyledLayout>
-        <ConversationList
+        {/* <ConversationList
           conversations={conversations}
           selectedId={selectedConversation}
           onSelect={setSelectedConversation}
-        />
+        /> */}
         <MainContent>
           <ContentArea $isEmpty={isEmpty}>
             {loading ? (

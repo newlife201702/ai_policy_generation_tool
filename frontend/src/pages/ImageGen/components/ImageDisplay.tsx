@@ -9,6 +9,21 @@ const Container = styled.div`
   max-width: 800px;
   margin: 0 auto;
   padding: 20px;
+  overflow-y: auto;
+
+  /* 美化滚动条 */
+  &::-webkit-scrollbar {
+    width: 6px;
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 6px;
+    transition: background 0.2s;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: #666;
+  }
 `;
 
 const ImageWrapper = styled.div`
