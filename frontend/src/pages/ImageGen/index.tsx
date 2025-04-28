@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, Input, Button, Upload, message, Spin } from 'antd';
+import { Layout, Input, Button, Upload, message, Spin, ConfigProvider, theme } from 'antd';
 import { UploadOutlined, SendOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
 import axios from 'axios';
@@ -31,7 +31,7 @@ const MainContent = styled(Content)`
   background: #000000;
 `;
 
-const ContentArea = styled.div`
+const ContentArea = styled.div<{ $isEmpty: boolean }>`
   flex: 1;
   overflow-y: auto;
   margin-bottom: 20px;
@@ -111,11 +111,24 @@ const SendButton = styled(Button)`
   }
 `;
 
-interface Conversation {
-  id: string;
+interface Image {
   prompt: string;
-  imageUrl?: string;
+  url: string;
+  timestamp: Date;
+  model: 'GPT-4o';
+  type: 'text2img' | 'img2img';
+  sourceImage?: string;
+}
+
+interface Conversation {
+  _id: string;
+  userId: string;
+  title: string;
+  model: 'GPT-4o';
+  images: Image[];
+  type: 'image';
   createdAt: Date;
+  updatedAt: Date;
 }
 
 const ImageGen: React.FC = () => {
@@ -132,7 +145,7 @@ const ImageGen: React.FC = () => {
 
   const fetchConversations = async () => {
     try {
-      const response = await axios.get('/api/conversations/images', {
+      const response = await axios.get('/api/image-gen', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setConversations(response.data);
@@ -144,93 +157,132 @@ const ImageGen: React.FC = () => {
   const handleImageUpload = (info: any) => {
     if (info.file.status === 'done') {
       setImageFile(info.file.originFileObj);
+      message.success('图片上传完成');
     }
   };
 
   const handleSubmit = async () => {
-    if (!prompt.trim() && !imageFile) {
-      message.warning('请输入提示词或上传图片');
+    if (!prompt.trim()) {
+      message.warning('请输入提示词');
       return;
+    }
+
+    let currentConversationId = selectedConversation;
+
+    // 如果没有选中的对话，创建新对话
+    if (!currentConversationId) {
+      try {
+        const response = await axios.post('/api/image-gen', {}, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setConversations([response.data, ...conversations]);
+        setSelectedConversation(response.data._id);
+        currentConversationId = response.data._id;
+      } catch (error) {
+        message.error('创建对话失败');
+        return;
+      }
     }
 
     setLoading(true);
     try {
+      // 创建 FormData 对象并添加数据
       const formData = new FormData();
       formData.append('prompt', prompt);
+      formData.append('type', imageFile ? 'img2img' : 'text2img');
       if (imageFile) {
-        formData.append('image', imageFile);
+        formData.append('sourceImage', imageFile);
       }
 
-      const response = await axios.post('/api/images/generate', formData, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data'
+      // 检查 FormData 内容
+      console.log('FormData contents:');
+      for (let pair of formData.entries()) {
+        console.log(pair[0] + ': ' + pair[1]);
+      }
+
+      // 发送请求时不要将 Content-Type 设置为 multipart/form-data，
+      // 让浏览器自动设置正确的 boundary
+      const response = await axios.post(
+        `/api/image-gen/${currentConversationId}/generate`,
+        formData,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          }
         }
+      );
+
+      // 更新对话列表中的图片
+      setConversations(prevConversations => {
+        return prevConversations.map(conv => {
+          if (conv._id === currentConversationId) {
+            return {
+              ...conv,
+              images: [...conv.images, response.data]
+            };
+          }
+          return conv;
+        });
       });
-
-      const newConversation: Conversation = {
-        id: response.data.id,
-        prompt,
-        imageUrl: response.data.imageUrl,
-        createdAt: new Date()
-      };
-
-      setConversations(prev => [newConversation, ...prev]);
-      setSelectedConversation(newConversation.id);
+      
       setPrompt('');
       setImageFile(null);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('生成图片失败:', error.response?.data || error.message);
       message.error('生成图片失败');
     } finally {
       setLoading(false);
     }
   };
 
-  const currentConversation = conversations.find(conv => conv.id === selectedConversation);
+  const currentConversation = conversations.find(conv => conv._id === selectedConversation);
+  console.log('conversations', conversations, 'selectedConversation', selectedConversation, 'currentConversation', currentConversation);
   const isEmpty = conversations.length === 0;
 
   return (
-    <StyledLayout>
-      <ConversationList
-        conversations={conversations}
-        selectedId={selectedConversation}
-        onSelect={setSelectedConversation}
-      />
-      <MainContent>
-        <ContentArea $isEmpty={isEmpty}>
-          {loading ? (
-            <Spin size="large" />
-          ) : isEmpty ? (
-            <EmptyState />
-          ) : (
-            <ImageDisplay conversation={currentConversation} />
-          )}
-        </ContentArea>
-        <InputArea>
-          <StyledUpload
-            name="image"
-            showUploadList={false}
-            customRequest={({ file, onSuccess }: any) => {
-              onSuccess();
-            }}
-            onChange={handleImageUpload}
-          >
-            <Button icon={<UploadOutlined />} />
-          </StyledUpload>
-          <StyledTextArea
-            value={prompt}
-            onChange={e => setPrompt(e.target.value)}
-            placeholder="请描述您想要生成的图片..."
-            autoSize={{ minRows: 1, maxRows: 4 }}
-          />
-          <SendButton
-            icon={<SendOutlined />}
-            onClick={handleSubmit}
-            disabled={loading || (!prompt.trim() && !imageFile)}
-          />
-        </InputArea>
-      </MainContent>
-    </StyledLayout>
+    <ConfigProvider theme={{ algorithm: theme.darkAlgorithm }}>
+      <StyledLayout>
+        <ConversationList
+          conversations={conversations}
+          selectedId={selectedConversation}
+          onSelect={setSelectedConversation}
+        />
+        <MainContent>
+          <ContentArea $isEmpty={isEmpty}>
+            {loading ? (
+              <Spin size="large" />
+            ) : isEmpty ? (
+              <EmptyState />
+            ) : (
+              <ImageDisplay conversation={currentConversation} />
+            )}
+          </ContentArea>
+          <InputArea>
+            <StyledUpload
+              name="image"
+              showUploadList={false}
+              customRequest={({ file, onSuccess }: any) => {
+                onSuccess();
+              }}
+              onChange={handleImageUpload}
+            >
+              <Button icon={<UploadOutlined />} />
+            </StyledUpload>
+            <StyledTextArea
+              value={prompt}
+              onChange={e => setPrompt(e.target.value)}
+              placeholder="请描述您想要生成的图片..."
+              autoSize={{ minRows: 1, maxRows: 4 }}
+            />
+            <SendButton
+              icon={<SendOutlined />}
+              onClick={handleSubmit}
+              disabled={loading || !prompt.trim()}
+            />
+          </InputArea>
+        </MainContent>
+      </StyledLayout>
+    </ConfigProvider>
   );
 };
 

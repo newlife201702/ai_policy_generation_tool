@@ -9,6 +9,7 @@ import imageGenRoutes from './routes/imageGen';
 import paymentRoutes from './routes/payment';
 import { errorHandler } from './middleware/errorHandler';
 import { env } from './config/env';
+import path from 'path';
 
 const logger = createLogger('app');
 const app = express();
@@ -17,6 +18,9 @@ const port = env.port;
 // 中间件
 app.use(cors());
 app.use(express.json());
+
+// 静态文件服务
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // 路由
 app.use('/api/auth', authRoutes);

@@ -70,11 +70,24 @@ const ItemDate = styled(Text)`
   font-size: 12px;
 `;
 
-interface Conversation {
-  id: string;
+interface Image {
   prompt: string;
-  imageUrl?: string;
+  url: string;
+  timestamp: Date;
+  model: 'GPT-4o';
+  type: 'text2img' | 'img2img';
+  sourceImage?: string;
+}
+
+interface Conversation {
+  _id: string;
+  userId: string;
+  title: string;
+  model: 'GPT-4o';
+  images: Image[];
+  type: 'image';
   createdAt: Date;
+  updatedAt: Date;
 }
 
 interface ConversationListProps {
@@ -96,11 +109,15 @@ const ConversationList: React.FC<ConversationListProps> = ({
       <List>
         {conversations.map((conversation) => (
           <ConversationItem
-            key={conversation.id}
-            $selected={selectedId === conversation.id}
-            onClick={() => onSelect(conversation.id)}
+            key={conversation._id}
+            $selected={selectedId === conversation._id}
+            onClick={() => onSelect(conversation._id)}
           >
-            <ItemTitle>{conversation.prompt}</ItemTitle>
+            <ItemTitle>
+              {conversation.images.length > 0
+                ? conversation.images[conversation.images.length - 1].prompt
+                : conversation.title}
+            </ItemTitle>
             <ItemDate>
               {format(new Date(conversation.createdAt), 'MM月dd日 HH:mm', { locale: zhCN })}
             </ItemDate>
