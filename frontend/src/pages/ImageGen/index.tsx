@@ -8,6 +8,7 @@ import ConversationList from './components/ConversationList';
 import ImageDisplay from './components/ImageDisplay';
 import EmptyState from './components/EmptyState';
 import PaymentModal from '../../components/PaymentModal';
+import { useNavigate } from 'react-router-dom';
 
 const { Content } = Layout;
 
@@ -165,6 +166,7 @@ const ImageGen: React.FC = () => {
   const [paymentOptions, setPaymentOptions] = useState<PaymentOption[]>([]);
   const [currentPlan, setCurrentPlan] = useState('');
   const { token } = useAppSelector((state) => state.auth);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchConversations();
@@ -329,6 +331,12 @@ const ImageGen: React.FC = () => {
   return (
     <ConfigProvider theme={{ algorithm: theme.darkAlgorithm }}>
       <StyledLayout>
+        <Button
+          style={{ position: 'absolute', top: 20, right: 40, zIndex: 10 }}
+          onClick={() => navigate('/text-chat')}
+        >
+          跳转到策略生成工具
+        </Button>
         {/* <ConversationList
           conversations={conversations}
           selectedId={selectedConversation}

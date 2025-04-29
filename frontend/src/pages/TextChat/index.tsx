@@ -670,6 +670,12 @@ const TextChat: React.FC = () => {
 
   return (
     <ChatContainer>
+      <Button
+        style={{ position: 'absolute', top: 20, right: 40, zIndex: 10 }}
+        onClick={() => navigate('/image-gen')}
+      >
+        跳转到生图功能
+      </Button>
       {showHistory && (
         <HistorySidebar>
           <HistoryHeader>
