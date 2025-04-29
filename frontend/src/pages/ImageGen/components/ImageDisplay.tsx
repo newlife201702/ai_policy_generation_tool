@@ -1,50 +1,98 @@
 import React from 'react';
-import styled from 'styled-components';
-import { Typography } from 'antd';
-
-const { Text } = Typography;
+import styled, { keyframes } from 'styled-components';
+import { DownloadOutlined } from '@ant-design/icons';
 
 const Container = styled.div`
   width: 100%;
   max-width: 800px;
   margin: 0 auto;
   padding: 20px;
-  overflow-y: auto;
+`;
 
-  /* 美化滚动条 */
-  &::-webkit-scrollbar {
-    width: 6px;
-    background: transparent;
+const MessageGroup = styled.div`
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+`;
+
+const UserMessage = styled.div`
+  align-self: flex-end;
+  max-width: 80%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const CreateImageText = styled.span`
+  color: #1677ff;
+  font-size: 14px;
+`;
+
+const UserPrompt = styled.span`
+  color: #fff;
+  font-size: 14px;
+`;
+
+const AIMessage = styled.div`
+  align-self: flex-start;
+  max-width: 80%;
+`;
+
+const shimmer = keyframes`
+  0% {
+    background-position: -1000px 0;
   }
-  &::-webkit-scrollbar-thumb {
-    background: #444;
-    border-radius: 6px;
-    transition: background 0.2s;
+  100% {
+    background-position: 1000px 0;
   }
-  &::-webkit-scrollbar-thumb:hover {
-    background: #666;
-  }
+`;
+
+const ProcessingText = styled.div`
+  color: #fff;
+  font-size: 14px;
+  background: linear-gradient(90deg, #333 0%, #444 50%, #333 100%);
+  background-size: 1000px 100%;
+  animation: ${shimmer} 2s infinite linear;
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
 `;
 
 const ImageWrapper = styled.div`
-  margin-bottom: 20px;
+  position: relative;
+  margin-top: 12px;
   background: #1a1a1a;
   border-radius: 12px;
   overflow: hidden;
+  width: fit-content;
   
-  img {
-    width: 100%;
-    height: auto;
-    display: block;
+  &:hover .download-icon {
+    opacity: 1;
   }
 `;
 
-const PromptText = styled(Text)`
+const StyledImage = styled.img`
+  max-width: 100%;
+  height: auto;
   display: block;
-  color: #fff !important;
-  font-size: 14px;
-  margin-bottom: 20px;
-  text-align: center;
+`;
+
+const DownloadButton = styled.div`
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s;
+  color: white;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.8);
+  }
 `;
 
 interface Image {
@@ -69,31 +117,84 @@ interface Conversation {
 
 interface ImageDisplayProps {
   conversation?: Conversation;
+  isGenerating?: boolean;
+  currentPrompt?: string;
 }
 
-const ImageDisplay: React.FC<ImageDisplayProps> = ({ conversation }) => {
-  if (!conversation || !conversation.images.length) {
+const ImageDisplay: React.FC<ImageDisplayProps> = ({ 
+  conversation, 
+  isGenerating,
+  currentPrompt 
+}) => {
+  if (!conversation && !currentPrompt) {
     return null;
   }
 
+  const handleDownload = async (url: string, prompt: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `${prompt.slice(0, 30)}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error('下载图片失败:', error);
+    }
+  };
+
   return (
     <Container>
-      {conversation.images.map((img, idx) => (
-        <div key={idx}>
-          <PromptText>{img.prompt}</PromptText>
-          <ImageWrapper>
-            <img src={img.url} alt={img.prompt} />
-          </ImageWrapper>
-          {img.sourceImage && (
-            <div>
-              <PromptText>原始图片：</PromptText>
-              <ImageWrapper>
-                <img src={img.sourceImage} alt="Source" />
-              </ImageWrapper>
-            </div>
-          )}
-        </div>
+      {/* 显示历史消息 */}
+      {conversation?.images.map((img, idx) => (
+        <MessageGroup key={`history-${idx}`}>
+          <UserMessage>
+            <CreateImageText>创建图片</CreateImageText>
+            <UserPrompt>{img.prompt}</UserPrompt>
+          </UserMessage>
+
+          <AIMessage>
+            <UserPrompt>图片已创建</UserPrompt>
+            <ImageWrapper>
+              <StyledImage src={img.url} alt={img.prompt} />
+              <DownloadButton
+                className="download-icon"
+                onClick={() => handleDownload(img.url, img.prompt)}
+              >
+                <DownloadOutlined />
+              </DownloadButton>
+            </ImageWrapper>
+            {img.sourceImage && (
+              <div style={{ marginTop: '12px' }}>
+                <UserPrompt>原始图片</UserPrompt>
+                <ImageWrapper>
+                  <StyledImage src={img.sourceImage} alt="Source" />
+                </ImageWrapper>
+              </div>
+            )}
+          </AIMessage>
+        </MessageGroup>
       ))}
+
+      {/* 显示当前正在生成的消息 */}
+      {isGenerating && currentPrompt && (
+        <MessageGroup key="generating">
+          <UserMessage>
+            <CreateImageText>创建图片</CreateImageText>
+            <UserPrompt>{currentPrompt}</UserPrompt>
+          </UserMessage>
+
+          <AIMessage>
+            <ProcessingText>
+              正在生成图片，请稍候...
+            </ProcessingText>
+          </AIMessage>
+        </MessageGroup>
+      )}
     </Container>
   );
 };

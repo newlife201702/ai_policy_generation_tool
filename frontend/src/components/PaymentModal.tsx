@@ -174,7 +174,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ visible, onClose, paymentOp
                   <PriceTag>
                     <span className="currency">¥</span>
                     {option.amount}
-                    <span className="period">/ 月</span>
+                    {/* <span className="period">/ 月</span> */}
                   </PriceTag>
                 </PriceWrapper>
                 <StyledButton 

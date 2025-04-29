@@ -41,6 +41,20 @@ const ContentArea = styled.div<{ $isEmpty: boolean }>`
   align-items: center;
   justify-content: ${props => props.$isEmpty ? 'center' : 'flex-start'};
   padding: 0 20px;
+  
+  /* 美化滚动条 */
+  &::-webkit-scrollbar {
+    width: 6px;
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 6px;
+    transition: background 0.2s;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: #666;
+  }
 `;
 
 const InputArea = styled.div`
@@ -132,14 +146,23 @@ interface Conversation {
   updatedAt: Date;
 }
 
+interface PaymentOption {
+  amount: number;
+  title: string;
+  type: string;
+  subType: string;
+  features: string[];
+}
+
 const ImageGen: React.FC = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [prompt, setPrompt] = useState('');
+  const [currentPrompt, setCurrentPrompt] = useState<string>('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
-  const [paymentOptions, setPaymentOptions] = useState([]);
+  const [paymentOptions, setPaymentOptions] = useState<PaymentOption[]>([]);
   const [currentPlan, setCurrentPlan] = useState('');
   const { token } = useAppSelector((state) => state.auth);
 
@@ -227,6 +250,9 @@ const ImageGen: React.FC = () => {
       return;
     }
 
+    setCurrentPrompt(prompt.trim());
+    setLoading(true);
+
     let currentConversationId = selectedConversation;
 
     // 如果没有选中的对话，创建新对话
@@ -240,11 +266,12 @@ const ImageGen: React.FC = () => {
         currentConversationId = response.data._id;
       } catch (error) {
         message.error('创建对话失败');
+        setLoading(false);
+        setCurrentPrompt('');
         return;
       }
     }
 
-    setLoading(true);
     try {
       // 创建 FormData 对象并添加数据
       const formData = new FormData();
@@ -292,13 +319,12 @@ const ImageGen: React.FC = () => {
       message.error('生成图片失败');
     } finally {
       setLoading(false);
+      setCurrentPrompt('');
     }
   };
 
   const currentConversation = conversations.find(conv => conv._id === selectedConversation);
-  // console.log('conversations', conversations, 'selectedConversation', selectedConversation, 'currentConversation', currentConversation);
-  // const isEmpty = conversations.length === 0;
-  const isEmpty = !selectedConversation;
+  const isEmpty = !selectedConversation && !loading;
 
   return (
     <ConfigProvider theme={{ algorithm: theme.darkAlgorithm }}>
@@ -310,12 +336,14 @@ const ImageGen: React.FC = () => {
         /> */}
         <MainContent>
           <ContentArea $isEmpty={isEmpty}>
-            {loading ? (
-              <Spin size="large" />
-            ) : isEmpty ? (
+            {isEmpty ? (
               <EmptyState />
             ) : (
-              <ImageDisplay conversation={currentConversation} />
+              <ImageDisplay 
+                conversation={currentConversation} 
+                isGenerating={loading}
+                currentPrompt={currentPrompt}
+              />
             )}
           </ContentArea>
           <InputArea>
