@@ -30,8 +30,10 @@ export class ImageGenService {
   private readonly baseUrl: string;
 
   private constructor() {
-    this.apiEndpoint = 'https://api.siliconflow.cn';
-    this.apiKey = 'sk-fkcwndlwyfywjxmiumiyvyvnmtzcblllkcnisrfvufawdtep';
+    // this.apiEndpoint = 'https://api.siliconflow.cn';
+    // this.apiKey = 'sk-fkcwndlwyfywjxmiumiyvyvnmtzcblllkcnisrfvufawdtep';
+    this.apiEndpoint = 'https://api.xi-ai.cn';
+    this.apiKey = 'sk-PNSSUJbbrwZ4ZCpo90CfBdC05e834c70AcF10185007b6461';
     // 设置基础URL，用于生成图片访问地址
     this.baseUrl = process.env.BASE_URL || 'http://localhost:5000';
 
@@ -99,60 +101,78 @@ export class ImageGenService {
         // 生成原始图片的永久URL
         sourceImageUrl = `${this.baseUrl}/${params.sourceImage.replace(/\\/g, '/')}`;
       }
-      console.log('imageBase64', imageBase64);
 
       // 调用AI服务生成图片
-      // const response = await axiosInstance.post(
-      //   `${this.apiEndpoint}/v1/chat/completions`,
-      //   {
-      //     model: 'gpt-4o-image-vip',
-      //     messages: [
-      //       {
-      //         role: 'user',
-      //         content: '画一只猫'
-      //       }
-      //     ],
-      //     frequency_penalty: 0,
-      //     max_tokens: 4000,
-      //     presence_penalty: 0,
-      //     stream: true,
-      //     temperature: 0.5,
-      //     top_p: 1
-      //   },
-      //   {
-      //     headers: {
-      //       'Authorization': `Bearer ${this.apiKey}`,
-      //       'Content-Type': 'application/json',
-      //     },
-      //   }
-      // );
-      const response = await axios.post(
-        `${this.apiEndpoint}/v1/images/generations`,
+      const response = await axiosInstance.post(
+        `${this.apiEndpoint}/v1/chat/completions`,
         {
-          model: 'Kwai-Kolors/Kolors',
-          prompt: params.prompt,
-          image_size: '1024x1024',
-          batch_size: 1,
-          num_inference_steps: 20,
-          guidance_scale: 7.5,
-          // 添加图生图相关参数
-          ...(params.type === 'img2img' && imageBase64 && {
-            image: imageBase64
-          })
+          model: 'gpt-4o-image-vip',
+          messages: [
+            {
+              role: 'user',
+              content: params.prompt
+            }
+          ],
+          frequency_penalty: 0,
+          max_tokens: 4000,
+          presence_penalty: 0,
+          stream: true,
+          temperature: 0.5,
+          top_p: 1
         },
         {
           headers: {
             'Authorization': `Bearer ${this.apiKey}`,
             'Content-Type': 'application/json',
           },
+          responseType: 'stream'
         }
       );
 
-      console.log('response.data', response.data);
+      // 处理流式响应
+      let imageUrl = '';
+      let content = '';
+      
+      for await (const chunk of response.data) {
+        const lines = chunk.toString().split('\n');
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') {
+              break;
+            }
+            
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.choices?.[0]?.delta?.content) {
+                content += parsed.choices[0].delta.content;
+                
+                // 从内容中提取图片URL
+                const urlMatch = content.match(/https:\/\/filesystem\.site\/cdn\/[^)]+\.png/);
+                if (urlMatch) {
+                  imageUrl = urlMatch[0];
+                  break;
+                }
+              }
+            } catch (e) {
+              console.error('Error parsing chunk:', e);
+            }
+          }
+        }
+        
+        if (imageUrl) {
+          break;
+        }
+      }
+
+      if (!imageUrl) {
+        throw new AppError(500, '未能获取到生成的图片URL');
+      }
 
       // 下载并保存图片
-      const aiGeneratedImageUrl = response.data.data[0].url;
-      const savedImagePath = await downloadAndSaveImage(aiGeneratedImageUrl, IMAGES_DIR);
+      // const aiGeneratedImageUrl = response.data.data[0].url;
+      // const savedImagePath = await downloadAndSaveImage(aiGeneratedImageUrl, IMAGES_DIR);
+      const savedImagePath = await downloadAndSaveImage(imageUrl, IMAGES_DIR);
       
       // 生成永久访问URL
       const permanentUrl = `${this.baseUrl}/${savedImagePath}`;
@@ -171,6 +191,7 @@ export class ImageGenService {
 
       return generatedImage;
     } catch (error) {
+      console.error('Image generation failed:', error);
       logger.error('Image generation failed:', error);
       throw new AppError(500, '图片生成失败，请稍后重试');
     }

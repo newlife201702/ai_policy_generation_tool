@@ -237,7 +237,7 @@ const TextChat: React.FC = () => {
             {
               role: 'user',
               // content,
-              content: content + '150字以内',
+              content: content + '回答请控制在150字以内',
               timestamp: userMessage.timestamp
             }
           ],
@@ -411,7 +411,7 @@ const TextChat: React.FC = () => {
             id: userMessage.id,
             role: 'user',
             // content, 
-            content: content + '150字以内',
+            content: content + '回答请控制在150字以内',
             timestamp: userMessage.timestamp,
             parentId: selectedMessageId
           }
