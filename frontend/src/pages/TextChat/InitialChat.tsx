@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { Input, Button, Select, Typography, message } from 'antd';
+import type { TextAreaProps } from 'antd/es/input';
+import type { DefaultOptionType } from 'antd/es/select';
 import styled from 'styled-components';
 import { api } from '../../utils/api';
 import PaymentModal from '../../components/PaymentModal';
 import axios from 'axios';
 import { useAppSelector } from '../../store/hooks';
+import type { SelectProps } from 'antd';
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -114,13 +117,15 @@ const InputBox = styled.div`
   background-color: rgba(255, 255, 255, 1);
   border-radius: 8px;
   overflow: hidden;
+  position: relative;
 `;
 
-const StyledTextArea = styled(TextArea)`
+const StyledTextArea = styled(TextArea)<TextAreaProps>`
   background-color: white;
   border: none;
   color: #333;
   padding: 15px;
+  padding-bottom: 60px; // 为下拉框留出空间
   
   &::placeholder {
     color: rgba(0, 0, 0, 0.45);
@@ -129,6 +134,34 @@ const StyledTextArea = styled(TextArea)`
   &:hover, &:focus {
     background-color: white;
     box-shadow: none;
+  }
+`;
+
+const SelectWrapper = styled.div`
+  position: absolute;
+  left: 15px;
+  bottom: 15px;
+  display: flex;
+  gap: 10px;
+  z-index: 1;
+`;
+
+const StyledSelect = styled(Select)`
+  width: 120px;
+  height: 32px;
+  background-color: #f5f5f5 !important;
+  border-radius: 4px;
+  
+  .ant-select-selector {
+    background-color: #f5f5f5 !important;
+    border: none !important;
+    height: 32px !important;
+    padding: 4px 11px !important;
+    border-radius: 4px !important;
+  }
+  
+  .ant-select-selection-item {
+    color: rgba(0, 7, 20, 0.62) !important;
   }
 `;
 
@@ -185,19 +218,75 @@ const StartButton = styled(Button)`
   }
 `;
 
+interface PaymentOption {
+  amount: number;
+  title: string;
+  type: string;
+  subType: string;
+  features: string[];
+}
+
+interface CountryOption {
+  value: string;
+  label: string;
+}
+
 const InitialChat: React.FC<{
   onStartChat: (messages: any[], model: string) => void;
 }> = ({ onStartChat }) => {
   const { token } = useAppSelector((state) => state.auth);
   const [companyInfo, setCompanyInfo] = useState('');
-  const [brandGoal, setBrandGoal] = useState('');
+  const [selectedCountry, setSelectedCountry] = useState('全部');
+  const [targetGroup, setTargetGroup] = useState('不限');
   const [model, setModel] = useState<'deepseek' | 'gpt4'>('deepseek');
   const [loading, setLoading] = useState(false);
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
-  const [paymentOptions, setPaymentOptions] = useState([]);
+  const [paymentOptions, setPaymentOptions] = useState<PaymentOption[]>([]);
   const [currentPlan, setCurrentPlan] = useState('');
-  const [contents, setContents] = useState([]);
-  
+  const [contents, setContents] = useState<string[]>([]);
+
+  const countryOptions: CountryOption[] = [
+    { value: '全部', label: '全部' },
+    { value: '中国', label: '中国' },
+    { value: '美国', label: '美国' },
+    { value: '日本', label: '日本' },
+    { value: '韩国', label: '韩国' },
+    { value: '英国', label: '英国' },
+    { value: '德国', label: '德国' },
+    { value: '法国', label: '法国' },
+    { value: '意大利', label: '意大利' },
+    { value: '西班牙', label: '西班牙' },
+    { value: '俄罗斯', label: '俄罗斯' },
+    { value: '加拿大', label: '加拿大' },
+    { value: '澳大利亚', label: '澳大利亚' },
+    { value: '巴西', label: '巴西' },
+    { value: '印度', label: '印度' },
+  ];
+
+  const handleCountryChange: SelectProps['onChange'] = (value: string | string[]) => {
+    if (typeof value === 'string') {
+      setSelectedCountry(value);
+    } else if (Array.isArray(value) && value.length > 0) {
+      setSelectedCountry(value[0]);
+    }
+  };
+
+  const handleTargetGroupChange: SelectProps['onChange'] = (value: string | string[]) => {
+    if (typeof value === 'string') {
+      setTargetGroup(value);
+    } else if (Array.isArray(value) && value.length > 0) {
+      setTargetGroup(value[0]);
+    }
+  };
+
+  const handleModelChange: SelectProps['onChange'] = (value: string | string[]) => {
+    if (typeof value === 'string' && (value === 'deepseek' || value === 'gpt4')) {
+      setModel(value);
+    } else if (Array.isArray(value) && value.length > 0 && (value[0] === 'deepseek' || value[0] === 'gpt4')) {
+      setModel(value[0]);
+    }
+  };
+
   const handleGenerateStrategy = async () => {
     try {
       // 检查用户是否有权限使用服务
@@ -214,18 +303,18 @@ const InitialChat: React.FC<{
       const { canUse, needPayment, currentPlan } = response.data;
   
       // 继续执行生成策略的逻辑
-      if (!companyInfo.trim() || !brandGoal.trim()) {
-        message.error('请填写公司信息和品牌宣传目的');
+      if (!companyInfo.trim() || !selectedCountry.trim() || !targetGroup.trim()) {
+        message.error('请填写公司信息、国家选择和目标客户');
         return;
       }
 
       // 将内容拆分成5个部分
       const contents = [
-        `公司信息: ${companyInfo}\n品牌宣传的目的: ${brandGoal}\n请提供行业数据和市场情况分析（联网查询该行业相关信息并进行市场行业和趋势分析）。`,
-        `公司信息: ${companyInfo}\n品牌宣传的目的: ${brandGoal}\n请提供15秒黄金内容提炼 ：结合市场分析结果，提炼公司最有优势且最契合用户宣传目的的关键优势提炼最核心的内容 按内容提炼/内容层次划分/用户阅读路径三个点罗列出来，并说明为什么要这么罗列的原因。`,
-        `公司信息: ${companyInfo}\n品牌宣传的目的: ${brandGoal}\n根据罗列的内容分别说明，通过罗列的内容分别说明这些内容解决客户的哪些信任问题 （按产品信任 品牌信任 价值观信任区分）。`,
-        `公司信息: ${companyInfo}\n品牌宣传的目的: ${brandGoal}\n根据客户做大的卖点，用巅峰体验做为标题：提供视觉或者文案内容的创意达到让浏览公司品牌门户网站时，用户眼前一亮并且产生深刻记忆点，可提供多种方案。`,
-        `公司信息: ${companyInfo}\n品牌宣传的目的: ${brandGoal}\n根据以上全部内容，结合目前的网络推广途径，为客户整理出一套完善的品牌线上营销策略。`
+        `公司信息: ${companyInfo}\n国家: ${selectedCountry}\n目标客户: ${targetGroup}\n请提供行业数据和市场情况分析（联网查询该行业相关信息并进行市场行业和趋势分析）。`,
+        `公司信息: ${companyInfo}\n国家: ${selectedCountry}\n目标客户: ${targetGroup}\n请提供15秒黄金内容提炼 ：结合市场分析结果，提炼公司最有优势且最契合用户宣传目的的关键优势提炼最核心的内容 按内容提炼/内容层次划分/用户阅读路径三个点罗列出来，并说明为什么要这么罗列的原因。`,
+        `公司信息: ${companyInfo}\n国家: ${selectedCountry}\n目标客户: ${targetGroup}\n根据罗列的内容分别说明，通过罗列的内容分别说明这些内容解决客户的哪些信任问题 （按产品信任 品牌信任 价值观信任区分）。`,
+        `公司信息: ${companyInfo}\n国家: ${selectedCountry}\n目标客户: ${targetGroup}\n根据客户做大的卖点，用巅峰体验做为标题：提供视觉或者文案内容的创意达到让浏览公司品牌门户网站时，用户眼前一亮并且产生深刻记忆点，可提供多种方案。`,
+        `公司信息: ${companyInfo}\n国家: ${selectedCountry}\n目标客户: ${targetGroup}\n根据以上全部内容，结合目前的网络推广途径，为客户整理出一套完善的品牌线上营销策略。`
       ];
       setContents(contents);
 
@@ -234,7 +323,7 @@ const InitialChat: React.FC<{
         onStartChat(contents, model);
       } else {
         // 显示支付选择弹窗
-        const paymentOptions = [
+        const paymentOptions: PaymentOption[] = [
           {
             // amount: 9.9,
             amount: 0.01,
@@ -270,7 +359,11 @@ const InitialChat: React.FC<{
       message.error('检查服务访问权限失败');
     }
   };
-  
+
+  const filterOption = (input: string, option?: DefaultOptionType) => {
+    return (option?.label?.toString() ?? '').toLowerCase().includes(input.toLowerCase());
+  };
+
   return (
     <Container>
       <ContentWrapper>
@@ -293,22 +386,31 @@ const InitialChat: React.FC<{
                 value={companyInfo}
                 onChange={(e) => setCompanyInfo(e.target.value)}
               />
-            </InputBox>
-            
-            <InputBox>
-              <StyledTextArea
-                placeholder="请输入您公司品牌线上宣传最主要的目的"
-                autoSize={{ minRows: 6, maxRows: 10 }}
-                value={brandGoal}
-                onChange={(e) => setBrandGoal(e.target.value)}
-              />
+              <SelectWrapper>
+                <StyledSelect
+                  value={selectedCountry}
+                  onChange={handleCountryChange}
+                  showSearch
+                  optionFilterProp="children"
+                  filterOption={filterOption}
+                  options={countryOptions}
+                />
+                <StyledSelect
+                  value={targetGroup}
+                  onChange={handleTargetGroupChange}
+                >
+                  <Option value="不限">不限</Option>
+                  <Option value="B端客户">B端客户</Option>
+                  <Option value="C端客户">C端客户</Option>
+                </StyledSelect>
+              </SelectWrapper>
             </InputBox>
           </InputSection>
           
           <BottomSection>
             <ModelSelect
               value={model}
-              onChange={(value) => setModel(value)}
+              onChange={handleModelChange}
             >
               <Option value="deepseek">
                 <div style={{ display: 'flex', alignItems: 'center' }}>

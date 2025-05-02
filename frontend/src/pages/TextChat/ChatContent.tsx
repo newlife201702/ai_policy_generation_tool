@@ -404,10 +404,12 @@ const ChatContent: React.FC<ChatContentProps> = ({
     const firstUserMessage = userMessages[0];
     const content = firstUserMessage.content;
     const companyInfoMatch = content.match(/公司信息: (.*?)(?=\n|$)/);
-    const brandGoalMatch = content.match(/品牌宣传的目的: (.*?)(?=\n|$)/);
+    const selectedCountryMatch = content.match(/国家: (.*?)(?=\n|$)/);
+    const targetGroupMatch = content.match(/目标客户: (.*?)(?=\n|$)/);
     
     const companyInfo = companyInfoMatch ? companyInfoMatch[1] : "";
-    const brandGoal = brandGoalMatch ? brandGoalMatch[1] : "";
+    const selectedCountry = selectedCountryMatch ? selectedCountryMatch[1] : "";
+    const targetGroup = targetGroupMatch ? targetGroupMatch[1] : "";
   
     // 创建边
     const newEdges: Edge[] = assistantMessages
@@ -438,7 +440,7 @@ const ChatContent: React.FC<ChatContentProps> = ({
       {
         id: '1',
         role: 'user',
-        content: brandGoal,
+        content: `国家: ${selectedCountry}，目标客户: ${targetGroup}`,
         timestamp: firstUserMessage.timestamp
       }
     ].concat(assistantMessages.slice(1)).map((message, index) => {
