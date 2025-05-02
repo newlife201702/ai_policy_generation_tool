@@ -135,6 +135,13 @@ const StyledTextArea = styled(TextArea)<TextAreaProps>`
     background-color: white;
     box-shadow: none;
   }
+
+  // 防止移动端文本域获取焦点时页面放大
+  font-size: 16px !important;
+  -webkit-text-size-adjust: 100% !important;
+  -ms-text-size-adjust: 100% !important;
+  -moz-text-size-adjust: 100% !important;
+  text-size-adjust: 100% !important;
 `;
 
 const SelectWrapper = styled.div`
