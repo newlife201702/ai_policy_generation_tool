@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Input, Button, Select, Typography, message } from 'antd';
 import type { TextAreaProps } from 'antd/es/input';
 import type { DefaultOptionType } from 'antd/es/select';
@@ -242,15 +242,33 @@ const InitialChat: React.FC<{
   onStartChat: (messages: any[], model: string) => void;
 }> = ({ onStartChat }) => {
   const { token } = useAppSelector((state) => state.auth);
-  const [companyInfo, setCompanyInfo] = useState('');
-  const [selectedCountry, setSelectedCountry] = useState<string[]>(['全部']);
-  const [targetGroup, setTargetGroup] = useState('不限');
+  
+  // 从URL参数获取默认值
+  const urlParams = new URLSearchParams(window.location.search);
+  const state = urlParams.get('state');
+  const target = urlParams.get('target');
+  const company = urlParams.get('company');
+
+  const [companyInfo, setCompanyInfo] = useState(company || '');
+  const [selectedCountry, setSelectedCountry] = useState<string[]>(
+    state ? state.split(',').map(item => item.trim()) : ['全部']
+  );
+  const [targetGroup, setTargetGroup] = useState(target || '不限');
   const [model, setModel] = useState<'deepseek' | 'gpt4'>('deepseek');
   const [loading, setLoading] = useState(false);
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
   const [paymentOptions, setPaymentOptions] = useState<PaymentOption[]>([]);
   const [currentPlan, setCurrentPlan] = useState('');
   const [contents, setContents] = useState<string[]>([]);
+  const hasGeneratedRef = useRef(false);
+
+  useEffect(() => {
+    // 如果所有参数都存在且还未生成过，则调用handleGenerateStrategy
+    if (state && target && company && !hasGeneratedRef.current) {
+      hasGeneratedRef.current = true;
+      handleGenerateStrategy();
+    }
+  }, [state, target, company]);
 
   const countryOptions: CountryOption[] = [
     { value: '全部', label: '全部' },

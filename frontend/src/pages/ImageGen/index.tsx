@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Layout, Input, Button, Upload, message, Spin, ConfigProvider, theme } from 'antd';
 import { UploadOutlined, SendOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
@@ -156,21 +156,30 @@ interface PaymentOption {
 }
 
 const ImageGen: React.FC = () => {
+  // 从URL参数获取默认值
+  const urlParams = new URLSearchParams(window.location.search);
+  const promptValue = urlParams.get('prompt');
+
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
-  const [prompt, setPrompt] = useState('');
+  const [prompt, setPrompt] = useState(promptValue || '');
   const [currentPrompt, setCurrentPrompt] = useState<string>('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
   const [paymentOptions, setPaymentOptions] = useState<PaymentOption[]>([]);
   const [currentPlan, setCurrentPlan] = useState('');
+    const hasGeneratedRef = useRef(false);
   const { token } = useAppSelector((state) => state.auth);
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchConversations();
-  }, []);
+    if (promptValue && !hasGeneratedRef.current) {
+      hasGeneratedRef.current = true;
+      beforeSubmit();
+    }
+  }, [promptValue]);
 
   const fetchConversations = async () => {
     try {
