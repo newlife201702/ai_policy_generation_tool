@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { Tabs, Form, Input, Button, message, Space, ConfigProvider, theme } from 'antd';
 import styled from 'styled-components';
@@ -82,6 +82,7 @@ const Login: React.FC = () => {
   const [phoneForm] = Form.useForm();
   const [emailForm] = Form.useForm();
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
@@ -186,9 +187,36 @@ const Login: React.FC = () => {
       
       message.success('登录成功');
       
+      // 获取来源页面信息
+      const searchParams = new URLSearchParams(location.search);
+      const from = searchParams.get('from');
+      console.log('来源页面:', from);
+      const userInfo = activeTab === 'phone' ? values.phone : values.email;
+      
+      if (from) {
+        try {
+          // 尝试解析来源URL
+          const fromUrl = new URL(from);
+          // 如果是外部网站，直接跳转回去
+          if (fromUrl.origin !== window.location.origin) {
+            window.location.href = from + `?contact=${userInfo}`;
+            return;
+          }
+        } catch (e) {
+          console.error('解析来源URL失败:', e);
+        }
+      }
+      
+      // 如果是内部页面或解析失败，使用默认值
+      const redirectUrl = from || location.state?.from || '/text-chat';
+      
+      // 构建新的URL，添加用户信息参数
+      const newUrl = new URL(redirectUrl, window.location.origin);
+      newUrl.searchParams.set('contact', userInfo);
+      
       // 使用 setTimeout 确保状态更新后再跳转
       setTimeout(() => {
-        navigate('/text-chat');
+        navigate(newUrl.pathname + newUrl.search);
       }, 100);
     } catch (error: any) {
       console.error('登录错误:', error);
