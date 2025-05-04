@@ -189,9 +189,10 @@ const TextChat: React.FC = () => {
     try {
       // 清空现有消息
       setMessages(prev => [{
-        id: uuidv4(),
+        id: '0',
         role: 'user',
-        content: contents[0],
+        // content: contents[0],
+        content: contents[0] + '回答请控制在150字以内',
         timestamp: new Date().toISOString(),
         hidden: false, // 添加hidden属性，表示不显示
         parentId: undefined
@@ -206,7 +207,8 @@ const TextChat: React.FC = () => {
         const userMessage: ExtendedMessage = {
           id: uuidv4(),
           role: 'user',
-          content: content,
+          // content: content,
+          content: content + '回答请控制在150字以内',
           timestamp: new Date().toISOString(),
           hidden: true, // 添加hidden属性，表示不显示
           parentId: undefined
@@ -353,23 +355,34 @@ const TextChat: React.FC = () => {
   const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
   
   // 发送新消息
-  const handleSendMessage = async (content: string) => {
-    if (!selectedMessageId || !content.trim()) return;
+  const handleSendMessage = async (content: string, regenerateFlag?: boolean, parentId?: string, id?: string) => {
+    if ((!selectedMessageId || !content.trim()) && !regenerateFlag) return;
     
     console.log('开始发送消息');
     setLoading(true);
     
+    const regenerateIndex = messagesRef.current.findIndex(obj => obj.id === parentId);
+    const regenerateRequestData = {
+      messages: messagesRef.current.slice(0, regenerateIndex + 1),
+      model: model,
+      id,
+      parentId
+    };
+    console.log( 'messages', messages, 'messagesRef.current', messagesRef.current, 'regenerateIndex', regenerateIndex, 'messagesRef.current.slice(0, regenerateIndex + 1)', messagesRef.current.slice(0, regenerateIndex + 1));
     // 添加用户消息
     const userMessage: ExtendedMessage = {
       id: uuidv4(),
       role: 'user',
-      content: content,
+      // content: content,
+      content: content + '回答请控制在150字以内',
       timestamp: new Date().toISOString(),
       parentId: selectedMessageId
     };
 
-    setMessages(prev => [...prev, userMessage]);
-    await sleep(500);
+    if (!regenerateFlag) {
+      setMessages(prev => [...prev, userMessage]);
+      await sleep(500);
+    }
     
     // 添加初始的助手消息
     const assistantMessage: ExtendedMessage = {
@@ -382,20 +395,22 @@ const TextChat: React.FC = () => {
       model: model,
     };
     
-    // 如果选择了消息，将新消息插入到选中消息之后
-    if (selectedMessageId) {
-      setMessages(prev => {
-        const index = prev.findIndex(msg => msg.id === selectedMessageId);
-        if (index === -1) return [...prev, assistantMessage];
-        // return [
-        //   ...prev.slice(0, index + 1),
-        //   assistantMessage,
-        //   ...prev.slice(index + 1)
-        // ];
-        return [...prev, assistantMessage];
-      });
-    } else {
-      setMessages(prev => [...prev, assistantMessage]);
+    if (!regenerateFlag) {
+      // 如果选择了消息，将新消息插入到选中消息之后
+      if (selectedMessageId) {
+        setMessages(prev => {
+          const index = prev.findIndex(msg => msg.id === selectedMessageId);
+          if (index === -1) return [...prev, assistantMessage];
+          // return [
+          //   ...prev.slice(0, index + 1),
+          //   assistantMessage,
+          //   ...prev.slice(index + 1)
+          // ];
+          return [...prev, assistantMessage];
+        });
+      } else {
+        setMessages(prev => [...prev, assistantMessage]);
+      }
     }
     
     try {
@@ -429,7 +444,7 @@ const TextChat: React.FC = () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(requestData)
+        body: JSON.stringify(regenerateFlag ? regenerateRequestData : requestData)
       });
       
       if (!response.ok) {
@@ -453,7 +468,7 @@ const TextChat: React.FC = () => {
           const newMessages = [...prev];
           const index = prev.findIndex(msg => msg.id === selectedMessageId);
           // const lastMessage = newMessages[index + 2];
-          const lastMessage = newMessages.find(msg => msg.id === assistantMessage.id);
+          const lastMessage = newMessages.find(msg => msg.id === (regenerateFlag ? id : assistantMessage.id));
           if (lastMessage && lastMessage.role === 'assistant') {
             lastMessage.content = content;
           }
@@ -511,7 +526,7 @@ const TextChat: React.FC = () => {
           const newMessages = [...prev];
           const index = prev.findIndex(msg => msg.id === selectedMessageId);
           // const lastMessage = newMessages[index + 2];
-          const lastMessage = newMessages.find(msg => msg.id === assistantMessage.id);
+          const lastMessage = newMessages.find(msg => msg.id === (regenerateFlag ? id : assistantMessage.id));
           if (lastMessage && lastMessage.role === 'assistant') {
             lastMessage.isStreaming = false;
           }
@@ -527,7 +542,7 @@ const TextChat: React.FC = () => {
       // 更新最后一条消息状态
       setMessages(prev => {
         const newMessages = [...prev];
-        const lastMessage = newMessages[newMessages.length - 1];
+        const lastMessage = regenerateFlag ? newMessages[regenerateIndex] : newMessages[newMessages.length - 1];
         if (lastMessage && lastMessage.role === 'assistant') {
           lastMessage.isStreaming = false;
           lastMessage.error = true;
@@ -541,15 +556,13 @@ const TextChat: React.FC = () => {
   
   // 重新生成最后一条助手消息
   const handleRegenerateMessage = async (message: ExtendedMessage) => {
-    // 获取对应的用户消息
-    const userMessage = messages.filter(msg => msg.role === 'user').pop();
-    if (!userMessage) return;
+    const parentMessage = messagesRef.current.find(item => item.id === message.parentId);
+    console.log('message', message, 'messages', messages, 'messagesRef.current', messagesRef.current, 'parentMessage', parentMessage);
     
-    // 删除最后一条助手消息
-    setMessages(prevMessages => prevMessages.slice(0, prevMessages.length - 1));
-    
-    // 重新生成回复
-    await handleSendMessage(userMessage.content);
+    if (parentMessage) {
+      // 重新生成回复
+      await handleSendMessage(parentMessage.content, true, message.parentId, message.id);
+    }
   };
   
   // 开始新的对话

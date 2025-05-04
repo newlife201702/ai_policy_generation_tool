@@ -514,7 +514,7 @@ const ChatContent: React.FC<ChatContentProps> = ({
   };
   
   // 修改renderMessage函数
-  const renderMessage = (message: ExtendedMessage) => {
+  const renderMessage = (message: ExtendedMessage, selectable?: boolean) => {
     // 如果消息被标记为隐藏，则不渲染
     if (message.hidden) return null;
     
@@ -543,14 +543,14 @@ const ChatContent: React.FC<ChatContentProps> = ({
         <MessageContent>
           <ReactMarkdown>{message.content}</ReactMarkdown>
           <MessageActions>
-            {/* <Button 
+            {selectable && <Button 
               type="text" 
               icon={<ReloadOutlined />} 
               onClick={(e) => {
                 e.stopPropagation();
                 onRegenerateMessage(message);
               }}
-            /> */}
+            />}
             <Button 
               type="text" 
               icon={<CopyOutlined />} 
@@ -609,7 +609,7 @@ const ChatContent: React.FC<ChatContentProps> = ({
               {message.content}
             </ReactMarkdown>
           ) : (
-            <MarkdownStyles>{renderMessage(message)}</MarkdownStyles>
+            <MarkdownStyles>{renderMessage(message, selectable)}</MarkdownStyles>
           )}
         </ResponseContent>
         <ModelInfo>
