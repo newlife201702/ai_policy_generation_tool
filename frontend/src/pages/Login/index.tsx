@@ -339,7 +339,7 @@ const Login: React.FC = () => {
     >
       <LoginContainer>
         <LoginCard>
-          <Title>欢迎登录</Title>
+          <Title>欢迎登录/注册</Title>
           <StyledTabs 
             items={items} 
             onChange={handleTabChange}
