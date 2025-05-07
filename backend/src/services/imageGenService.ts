@@ -107,12 +107,19 @@ export class ImageGenService {
         `${this.apiEndpoint}/v1/chat/completions`,
         {
           model: 'gpt-4o-image-vip',
-          messages: [
-            {
-              role: 'user',
-              content: params.prompt
-            }
-          ],
+          // messages: [
+          //   {
+          //     role: 'user',
+          //     content: params.prompt
+          //   }
+          // ],
+          messages: conversation?.images?.map(item => ({
+            role: 'user',
+            content: item.prompt
+          })).concat({
+            role: 'user',
+            content: params.prompt
+          }),
           frequency_penalty: 0,
           max_tokens: 4000,
           presence_penalty: 0,
