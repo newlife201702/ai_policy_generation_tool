@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Layout, Input, Button, Upload, message, Spin, ConfigProvider, theme } from 'antd';
-import { UploadOutlined, SendOutlined } from '@ant-design/icons';
+import { UploadOutlined, ArrowUpOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
 import axios from 'axios';
 import { useAppSelector } from '../../store/hooks';
@@ -84,6 +84,13 @@ const StyledTextArea = styled(Input.TextArea)`
     background: #1a1a1a;
     color: #fff;
   }
+
+  // 防止移动端文本域获取焦点时页面放大
+  font-size: 16px !important;
+  -webkit-text-size-adjust: 100% !important;
+  -ms-text-size-adjust: 100% !important;
+  -moz-text-size-adjust: 100% !important;
+  text-size-adjust: 100% !important;
 `;
 
 const StyledUpload = styled(Upload)`
@@ -92,32 +99,43 @@ const StyledUpload = styled(Upload)`
   }
 
   .ant-btn {
-    background: transparent;
-    border: 1px solid #333;
-    color: #fff;
+    background: #c9ff85;
+    border: none;
     
     &:hover {
+      background: #c9ff85 !important;
       border-color: #666;
-      color: #fff;
+      color: #000 !important;
     }
   }
+
+  position: absolute;
+  left: 135px;
+  bottom: 15px;
+  z-index: 1000;
+`;
+
+const ModelIcon = styled.img`
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
 `;
 
 const SendButton = styled(Button)`
-  background: #1a1a1a;
-  border: 1px solid #333;
-  color: #fff;
-  height: 40px;
-  width: 40px;
+  background: #c9ff85;
+  
+  border: none;
+  color: black;
   padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  rotate: 45deg;
   
   &:hover, &:focus {
-    background: #333;
+    background: #c9ff85 !important;
     border-color: #666;
-    color: #fff;
+    color: black !important;
   }
 
   &:disabled {
@@ -354,7 +372,29 @@ const ImageGen: React.FC = () => {
         <MainContent>
           <ContentArea $isEmpty={isEmpty}>
             {isEmpty ? (
-              <EmptyState />
+              <div style={{ position: 'relative' }}>
+                <EmptyState />
+                <ConfigProvider theme={{ algorithm: theme.defaultAlgorithm }}>
+                  <StyledTextArea
+                    style={{ margin: '0 auto', maxWidth: '900px', backgroundColor: '#ffffff', color: '#000000' }}
+                    value={prompt}
+                    onChange={e => setPrompt(e.target.value)}
+                    placeholder="请描述您要生成的图片"
+                    autoSize={{ minRows: 6, maxRows: 10 }}
+                  />
+                </ConfigProvider>
+                <SendButton style={{ position: 'absolute', left: '15px', bottom: '15px', rotate: '0deg', padding: '8px 16px' }}>
+                  <ModelIcon src="../../../imgs/gpt-icon.png" />GPT-4o
+                </SendButton>
+                <SendButton
+                  shape="circle"
+                  icon={<ArrowUpOutlined />}
+                  onClick={beforeSubmit}
+                  disabled={loading || !prompt.trim()}
+                  type="primary"
+                  style={{ position: 'absolute', right: '15px', bottom: '15px' }}
+                />
+              </div>
             ) : (
               <ImageDisplay 
                 conversation={currentConversation} 
@@ -363,29 +403,42 @@ const ImageGen: React.FC = () => {
               />
             )}
           </ContentArea>
-          <InputArea>
-            <StyledUpload
-              name="image"
-              showUploadList={false}
-              customRequest={({ file, onSuccess }: any) => {
-                onSuccess();
-              }}
-              onChange={handleImageUpload}
-            >
-              <Button icon={<UploadOutlined />} />
-            </StyledUpload>
-            <StyledTextArea
-              value={prompt}
-              onChange={e => setPrompt(e.target.value)}
-              placeholder="请描述您想要生成的图片..."
-              autoSize={{ minRows: 1, maxRows: 4 }}
-            />
-            <SendButton
-              icon={<SendOutlined />}
-              onClick={beforeSubmit}
-              disabled={loading || !prompt.trim()}
-            />
-          </InputArea>
+          {!isEmpty && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ position: 'relative', width: '100%', maxWidth: '900px' }}>
+                <ConfigProvider theme={{ algorithm: theme.defaultAlgorithm }}>
+                  <StyledUpload
+                    name="image"
+                    showUploadList={false}
+                    customRequest={({ file, onSuccess }: any) => {
+                      onSuccess();
+                    }}
+                    onChange={handleImageUpload}
+                  >
+                    <Button icon={<UploadOutlined />} />
+                  </StyledUpload>
+                  <StyledTextArea
+                    style={{ margin: '0 auto', maxWidth: '900px', backgroundColor: '#ffffff', color: '#000000' }}
+                    value={prompt}
+                    onChange={e => setPrompt(e.target.value)}
+                    placeholder="请描述您要生成的图片"
+                    autoSize={{ minRows: 6, maxRows: 10 }}
+                  />
+                </ConfigProvider>
+                <SendButton style={{ position: 'absolute', left: '15px', bottom: '15px', rotate: '0deg', padding: '8px 16px' }}>
+                  <ModelIcon src="../../../imgs/gpt-icon.png" />GPT-4o
+                </SendButton>
+                <SendButton
+                  shape="circle"
+                  icon={<ArrowUpOutlined />}
+                  onClick={beforeSubmit}
+                  disabled={loading || !prompt.trim()}
+                  type="primary"
+                  style={{ position: 'absolute', right: '15px', bottom: '15px' }}
+                />
+              </div>
+            </div>
+          )}
         </MainContent>
         <PaymentModal
           visible={paymentModalVisible}
