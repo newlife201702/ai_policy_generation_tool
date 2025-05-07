@@ -106,7 +106,7 @@ export class ImageGenService {
       const response = await axiosInstance.post(
         `${this.apiEndpoint}/v1/chat/completions`,
         {
-          model: 'gpt-4o-image-vip',
+          model: 'gpt-image-1-vip',
           // messages: [
           //   {
           //     role: 'user',

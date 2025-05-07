@@ -7,6 +7,8 @@ import {
 } from '@ant-design/icons';
 import styled from 'styled-components';
 import ReactMarkdown from 'react-markdown';
+import rehypeSlug from 'rehype-slug';
+import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import { Message } from '../../types/chat';
 import {
   ReactFlow,
@@ -18,6 +20,7 @@ import {
   useEdgesState,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import './index.css';
 
 // 定义扩展的消息类型
 interface ExtendedMessage extends Message {
@@ -528,7 +531,9 @@ const ChatContent: React.FC<ChatContentProps> = ({
           isSelected={false}
         >
           <MessageContent>
-            <ReactMarkdown>{message.content}</ReactMarkdown>
+            <div className="markdown-container">
+              <ReactMarkdown rehypePlugins={[rehypeSlug, rehypeAutolinkHeadings]}>{message.content}</ReactMarkdown>
+            </div>
           </MessageContent>
         </MessageWrapper>
       );
@@ -541,7 +546,9 @@ const ChatContent: React.FC<ChatContentProps> = ({
         isSelected={isSelected}
       >
         <MessageContent>
-          <ReactMarkdown>{message.content}</ReactMarkdown>
+          <div className="markdown-container">
+            <ReactMarkdown rehypePlugins={[rehypeSlug, rehypeAutolinkHeadings]}>{message.content}</ReactMarkdown>
+          </div>
           <MessageActions>
             {selectable && <Button 
               type="text" 
@@ -580,11 +587,17 @@ const ChatContent: React.FC<ChatContentProps> = ({
   `;
 
   const StyledMarkdown = styled(ReactMarkdown)`
-    white-space: pre-wrap;
-    margin-bottom: 15px;
-    color: white;
-    font-size: 14px;
-    line-height: 1.6;
+    white-space: pre-wrap; /* 保留空白符但允许换行 */
+    overflow-wrap: break-word; /* 在单词内换行 */
+    word-break: break-word;   /* 更激进的换行方式 */
+    max-width: 100%;          /* 限制最大宽度 */
+    overflow-x: hidden;       /* 隐藏水平溢出 */
+
+    pre {
+      white-space: pre-wrap;    /* 保留空白符但允许换行 */
+      overflow-x: auto;        /* 必要时显示水平滚动条 */
+      max-width: 100%;
+    }
   `;
 
   const CustomNode = ({ data: message, isConnectable, selectable, selected }) => {
@@ -605,9 +618,11 @@ const ChatContent: React.FC<ChatContentProps> = ({
         />
         <ResponseContent>
           {message.isStreaming ? (
-            <ReactMarkdown>
-              {message.content}
-            </ReactMarkdown>
+            <div className="markdown-container">
+              <ReactMarkdown rehypePlugins={[rehypeSlug, rehypeAutolinkHeadings]}>
+                {message.content}
+              </ReactMarkdown>
+            </div>
           ) : (
             <MarkdownStyles>{renderMessage(message, selectable)}</MarkdownStyles>
           )}
@@ -649,6 +664,10 @@ const ChatContent: React.FC<ChatContentProps> = ({
             panOnScroll={true}
             panOnScrollMode="vertical"
             onNodesChange={onNodesChange}
+            onPaneClick={() => {
+              // 点击画布空白处时取消选中
+              onSelectMessage('');
+            }}
           >
           </ReactFlow>
         </FlowContainer>
@@ -660,22 +679,24 @@ const ChatContent: React.FC<ChatContentProps> = ({
           生成新的内容 ↵
         </NewChatButton>
         
-        <InputContainer>
-          <StyledTextArea
-            placeholder="继续输入问题..."
-            autoSize={{ minRows: 1, maxRows: 4 }}
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            disabled={loading}
-          />
-          <SendButton
-            type="primary"
-            icon={<SendOutlined />}
-            onClick={handleSend}
-            disabled={!inputValue.trim() || loading}
-          />
-        </InputContainer>
+        {selectedMessageId && (
+          <InputContainer>
+            <StyledTextArea
+              placeholder="继续输入问题..."
+              autoSize={{ minRows: 1, maxRows: 4 }}
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={loading}
+            />
+            <SendButton
+              type="primary"
+              icon={<SendOutlined />}
+              onClick={handleSend}
+              disabled={!inputValue.trim() || loading}
+            />
+          </InputContainer>
+        )}
       </Container>
     </ConfigProvider>
   );

@@ -120,6 +120,7 @@ class ModelService {
         return;
       }
 
+      // const apiUrl = this.config.baseUrl === 'https://ark.cn-beijing.volces.com/api/v3/bots' ? `${this.config.baseUrl}/chat/completions` : `${this.config.baseUrl}/v1/chat/completions`;
       const apiUrl = `${this.config.baseUrl}/v1/chat/completions`;
       logger.info(`调用模型流式 API: ${apiUrl}, 模型: ${this.config.model}`);
       

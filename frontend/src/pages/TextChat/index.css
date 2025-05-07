@@ -1,0 +1,13 @@
+.markdown-container {
+  white-space: pre-wrap; /* 保留空白符但允许换行 */
+  overflow-wrap: break-word; /* 在单词内换行 */
+  word-break: break-word;   /* 更激进的换行方式 */
+  max-width: 100%;          /* 限制最大宽度 */
+  overflow-x: hidden;       /* 隐藏水平溢出 */
+
+  pre {
+    white-space: pre-wrap;    /* 保留空白符但允许换行 */
+    overflow-x: auto;        /* 必要时显示水平滚动条 */
+    max-width: 100%;
+  }
+}

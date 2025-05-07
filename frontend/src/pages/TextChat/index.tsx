@@ -373,8 +373,8 @@ const TextChat: React.FC = () => {
     const userMessage: ExtendedMessage = {
       id: uuidv4(),
       role: 'user',
-      // content: content,
-      content: content + '回答请控制在150字以内',
+      content: content,
+      // content: content + '回答请控制在150字以内',
       timestamp: new Date().toISOString(),
       parentId: selectedMessageId
     };
