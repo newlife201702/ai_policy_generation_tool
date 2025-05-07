@@ -8,6 +8,7 @@ import PaymentModal from '../../components/PaymentModal';
 import axios from 'axios';
 import { useAppSelector } from '../../store/hooks';
 import type { SelectProps } from 'antd';
+import { ArrowUpOutlined } from '@ant-design/icons';
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -27,16 +28,6 @@ const Container = styled.div`
   background-position: center;
   color: white;
   position: relative;
-  
-  &:before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, rgba(4,20,36,0.8) 0%, rgba(10,42,67,0.8) 100%);
-  }
 
   @media (max-width: 768px) {
     padding: 10px;
@@ -156,15 +147,15 @@ const SelectWrapper = styled.div`
 const StyledSelect = styled(Select)`
   width: 120px;
   height: 32px;
-  background-color: #f5f5f5 !important;
-  border-radius: 4px;
+  background-color: #c9ff85 !important;
+  border-radius: 8px;
   
   .ant-select-selector {
-    background-color: #f5f5f5 !important;
+    background-color: #c9ff85 !important;
     border: none !important;
     height: 32px !important;
     padding: 4px 11px !important;
-    border-radius: 4px !important;
+    border-radius: 8px !important;
   }
   
   .ant-select-selection-item {
@@ -211,17 +202,16 @@ const ModelIcon = styled.img`
 `;
 
 const StartButton = styled(Button)`
-  background: rgba(163, 163, 163, 0.20);
+  background: #c9ff85;
   border: none;
-  color: white;
-  height: 40px;
+  color: black;
   padding: 0 30px;
   font-size: 16px;
-  border-radius: 6px;
+  rotate: 45deg;
   
   &:hover {
-    background-color: #4096ff;
-    color: white;
+    background-color: #c9ff85 !important;
+    color: black !important;
   }
 `;
 
@@ -392,21 +382,19 @@ const InitialChat: React.FC<{
   return (
     <Container>
       <ContentWrapper>
-        <Logo>AI智能生成 归纳工具</Logo>
+        {/* <Logo>AI智能生成 归纳工具</Logo> */}
         
-        <MainTitle>帮您一键生成品牌策略</MainTitle>
+        <MainTitle>一键帮助您快速生成品牌策略</MainTitle>
         
         <Description>
-          在这个竞争激烈的市场环境中，拥有一份清晰、精准的品牌策略至关重要。然而，制定品牌策略的
-          过程往往复杂且耗时。现在，我们为您提供一种全新的解决方案——一键生成品牌策略，
-          快速、高效地帮助您的品牌脱颖而出。
+          围绕super-i“15秒黄金法则” “颠覆体验” 核心方法论，为您快速分析行业趋势，提供可模块化调整的品牌内容视觉和营销策略
         </Description>
         
         <InputBottomSection>
           <InputSection>
             <InputBox>
               <StyledTextArea
-                placeholder="请输入您的公司介绍（公司介绍里可以包含产品介绍 核心优势 服务客户等 导入资料越详细结果会越准确)"
+                placeholder="请输入您的公司介绍（公司介绍里可以包含产品介绍 核心优势 服务客户等 导入资料越详细结果会越准确）"
                 autoSize={{ minRows: 6, maxRows: 10 }}
                 value={companyInfo}
                 onChange={(e) => setCompanyInfo(e.target.value)}
@@ -453,6 +441,8 @@ const InitialChat: React.FC<{
             </ModelSelect>
             
             <StartButton
+              shape="circle"
+              icon={<ArrowUpOutlined />}
               onClick={() => {
                 console.log('点击了生成品牌策略按钮');
                 handleGenerateStrategy();
@@ -460,7 +450,6 @@ const InitialChat: React.FC<{
               loading={loading}
               type="primary"
             >
-              一键生成品牌线上化生态策略 ↵
             </StartButton>
           </BottomSection>
         </InputBottomSection>
