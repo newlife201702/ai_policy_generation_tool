@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { Tabs, Form, Input, Button, message, Space, ConfigProvider, theme } from 'antd';
 import styled from 'styled-components';
 import { setCredentials, logout } from '@/store/slices/authSlice';
 import { api } from '@/services/api';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import './index.css';
+import { RootState } from '@/store';
 
 const LoginContainer = styled.div`
   display: flex;
@@ -84,22 +85,51 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
+  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
   const [loading, setLoading] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [activeTab, setActiveTab] = useState('phone');
 
-  // 在组件加载时清除登录信息
+  // 检查登录状态
   useEffect(() => {
-    const clearLoginInfo = () => {
-      console.log('清理登录信息');
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      dispatch(logout());
-    };
+    const token = localStorage.getItem('token');
+    if (token && isAuthenticated) {
+      // 获取来源页面信息
+      const searchParams = new URLSearchParams(location.search);
+      const from = searchParams.get('from');
+      
+      if (from) {
+        try {
+          // 尝试解析来源URL
+          const fromUrl = new URL(from);
+          // 如果是外部网站，直接跳转回去
+          if (fromUrl.origin !== window.location.origin) {
+            window.location.href = from;
+            return;
+          }
+        } catch (e) {
+          console.error('解析来源URL失败:', e);
+        }
+      }
+      
+      // 如果是内部页面或解析失败，使用默认值
+      const redirectUrl = from || location.state?.from || '/text-chat';
+      navigate(redirectUrl);
+    }
+  }, [isAuthenticated, location.search, location.state?.from, navigate]);
+
+  // 在组件加载时清除登录信息
+  // useEffect(() => {
+  //   const clearLoginInfo = () => {
+  //     console.log('清理登录信息');
+  //     localStorage.removeItem('token');
+  //     localStorage.removeItem('user');
+  //     dispatch(logout());
+  //   };
     
-    clearLoginInfo();
-  }, [dispatch]);
+  //   clearLoginInfo();
+  // }, [dispatch]);
 
   // 重置表单
   const resetForm = () => {

@@ -1,14 +1,37 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import Login from '@/pages/Login';
 import TextChat from '@/pages/TextChat';
 import ImageGen from '@/pages/ImageGen';
 import { RootState } from '@/store';
+import { setCredentials } from '@/store/slices/authSlice';
 
 const App: React.FC = () => {
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
   const location = useLocation();
+  const dispatch = useDispatch();
+
+  // 检查登录状态
+  useEffect(() => {
+    const checkAuth = () => {
+      const token = localStorage.getItem('token');
+      const user = localStorage.getItem('user');
+      
+      if (token && user && !isAuthenticated) {
+        try {
+          const userData = JSON.parse(user);
+          dispatch(setCredentials({ token, user: userData }));
+        } catch (e) {
+          console.error('解析用户数据失败:', e);
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+        }
+      }
+    };
+
+    checkAuth();
+  }, [dispatch, isAuthenticated]);
 
   // 处理重定向到登录页面的逻辑
   const getLoginRedirectUrl = () => {
