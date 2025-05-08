@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Layout, Input, Button, Upload, message, Spin, ConfigProvider, theme } from 'antd';
-import { UploadOutlined, ArrowUpOutlined } from '@ant-design/icons';
+import { UploadOutlined, ArrowUpOutlined, CloseCircleFilled } from '@ant-design/icons';
 import styled from 'styled-components';
 import axios from 'axios';
 import { useAppSelector } from '../../store/hooks';
@@ -183,13 +183,15 @@ const ImageGen: React.FC = () => {
   const [prompt, setPrompt] = useState(promptValue || '');
   const [currentPrompt, setCurrentPrompt] = useState<string>('');
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
   const [paymentOptions, setPaymentOptions] = useState<PaymentOption[]>([]);
   const [currentPlan, setCurrentPlan] = useState('');
-    const hasGeneratedRef = useRef(false);
+  const hasGeneratedRef = useRef(false);
   const { token } = useAppSelector((state) => state.auth);
   const navigate = useNavigate();
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     fetchConversations();
@@ -211,9 +213,21 @@ const ImageGen: React.FC = () => {
   };
 
   const handleImageUpload = (info: any) => {
-    if (info.file.status === 'done') {
-      setImageFile(info.file.originFileObj);
-      message.success('图片上传完成');
+    const file = info.file.originFileObj;
+    if (file) {
+      setUploading(true);
+      const previewUrl = URL.createObjectURL(file);
+      setImageFile(file);
+      setImagePreview(previewUrl);
+      setUploading(false);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+      setImagePreview(null);
     }
   };
 
@@ -340,9 +354,8 @@ const ImageGen: React.FC = () => {
           return conv;
         });
       });
-      
       setPrompt('');
-      setImageFile(null);
+      handleRemoveImage();
     } catch (error: any) {
       console.error('生成图片失败:', error.response?.data || error.message);
       message.error('生成图片失败');
@@ -375,13 +388,38 @@ const ImageGen: React.FC = () => {
               <div style={{ position: 'relative' }}>
                 <EmptyState />
                 <ConfigProvider theme={{ algorithm: theme.defaultAlgorithm }}>
-                  <StyledTextArea
-                    style={{ margin: '0 auto', maxWidth: '900px', backgroundColor: '#ffffff', color: '#000000' }}
-                    value={prompt}
-                    onChange={e => setPrompt(e.target.value)}
-                    placeholder="请描述您要生成的图片"
-                    autoSize={{ minRows: 6, maxRows: 10 }}
-                  />
+                  <div style={{ position: 'relative', margin: '0 auto', maxWidth: '900px' }}>
+                    <StyledTextArea
+                      style={{ backgroundColor: '#ffffff', color: '#000000', paddingTop: imagePreview ? 72 : undefined }}
+                      value={prompt}
+                      onChange={e => setPrompt(e.target.value)}
+                      placeholder="请描述您要生成的图片"
+                      autoSize={{ minRows: 6, maxRows: 10 }}
+                    />
+                    {imagePreview && (
+                      <div style={{ position: 'absolute', top: 8, left: 8, width: 56, height: 56, zIndex: 2 }}>
+                        <img src={imagePreview} alt="缩略图" style={{ width: 56, height: 56, borderRadius: 6, objectFit: 'cover', boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }} />
+                        <Button
+                          size="small"
+                          shape="circle"
+                          icon={<CloseCircleFilled style={{ color: '#f5222d', fontSize: 16 }} />}
+                          style={{ position: 'absolute', top: -10, right: -10, zIndex: 3, background: 'white', boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }}
+                          onClick={handleRemoveImage}
+                        />
+                      </div>
+                    )}
+                  </div>
+                  <StyledUpload
+                    name="image"
+                    showUploadList={false}
+                    customRequest={({ file, onSuccess }: any) => {
+                      onSuccess();
+                    }}
+                    onChange={handleImageUpload}
+                    accept="image/*"
+                  >
+                    <Button icon={<UploadOutlined />} disabled={!!imageFile || uploading} />
+                  </StyledUpload>
                 </ConfigProvider>
                 <SendButton style={{ position: 'absolute', left: '15px', bottom: '15px', rotate: '0deg', padding: '8px 16px' }}>
                   <ModelIcon src="../../../imgs/gpt-icon.png" />GPT-4o
@@ -390,7 +428,7 @@ const ImageGen: React.FC = () => {
                   shape="circle"
                   icon={<ArrowUpOutlined />}
                   onClick={beforeSubmit}
-                  disabled={loading || !prompt.trim()}
+                  disabled={loading || uploading || !prompt.trim()}
                   type="primary"
                   style={{ position: 'absolute', right: '15px', bottom: '15px' }}
                 />
@@ -407,6 +445,27 @@ const ImageGen: React.FC = () => {
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
               <div style={{ position: 'relative', width: '100%', maxWidth: '900px' }}>
                 <ConfigProvider theme={{ algorithm: theme.defaultAlgorithm }}>
+                  <div style={{ position: 'relative', margin: '0 auto', maxWidth: '900px' }}>
+                    <StyledTextArea
+                      style={{ backgroundColor: '#ffffff', color: '#000000', paddingTop: imagePreview ? 72 : undefined }}
+                      value={prompt}
+                      onChange={e => setPrompt(e.target.value)}
+                      placeholder="请描述您要生成的图片"
+                      autoSize={{ minRows: 6, maxRows: 10 }}
+                    />
+                    {imagePreview && (
+                      <div style={{ position: 'absolute', top: 8, left: 8, width: 56, height: 56, zIndex: 2 }}>
+                        <img src={imagePreview} alt="缩略图" style={{ width: 56, height: 56, borderRadius: 6, objectFit: 'cover', boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }} />
+                        <Button
+                          size="small"
+                          shape="circle"
+                          icon={<CloseCircleFilled style={{ color: '#f5222d', fontSize: 16 }} />}
+                          style={{ position: 'absolute', top: -10, right: -10, zIndex: 3, background: 'white', boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }}
+                          onClick={handleRemoveImage}
+                        />
+                      </div>
+                    )}
+                  </div>
                   <StyledUpload
                     name="image"
                     showUploadList={false}
@@ -414,16 +473,10 @@ const ImageGen: React.FC = () => {
                       onSuccess();
                     }}
                     onChange={handleImageUpload}
+                    accept="image/*"
                   >
-                    <Button icon={<UploadOutlined />} />
+                    <Button icon={<UploadOutlined />} disabled={!!imageFile || uploading} />
                   </StyledUpload>
-                  <StyledTextArea
-                    style={{ margin: '0 auto', maxWidth: '900px', backgroundColor: '#ffffff', color: '#000000' }}
-                    value={prompt}
-                    onChange={e => setPrompt(e.target.value)}
-                    placeholder="请描述您要生成的图片"
-                    autoSize={{ minRows: 6, maxRows: 10 }}
-                  />
                 </ConfigProvider>
                 <SendButton style={{ position: 'absolute', left: '15px', bottom: '15px', rotate: '0deg', padding: '8px 16px' }}>
                   <ModelIcon src="../../../imgs/gpt-icon.png" />GPT-4o
@@ -432,7 +485,7 @@ const ImageGen: React.FC = () => {
                   shape="circle"
                   icon={<ArrowUpOutlined />}
                   onClick={beforeSubmit}
-                  disabled={loading || !prompt.trim()}
+                  disabled={loading || uploading || !prompt.trim()}
                   type="primary"
                   style={{ position: 'absolute', right: '15px', bottom: '15px' }}
                 />

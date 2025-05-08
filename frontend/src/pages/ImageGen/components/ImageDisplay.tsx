@@ -5,7 +5,7 @@ import { DownloadOutlined } from '@ant-design/icons';
 const Container = styled.div`
   width: 100%;
   max-width: 800px;
-  margin: 0 auto;
+  margin: 30px auto 0px;
   padding: 20px;
 `;
 
@@ -95,6 +95,39 @@ const DownloadButton = styled.div`
   }
 `;
 
+const SourceImageWrapper = styled.div`
+  position: relative;
+  margin-bottom: 4px;
+  border-radius: 8px;
+  overflow: hidden;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  background: none;
+`;
+
+const SourceStyledImage = styled.img`
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+  object-fit: cover;
+  display: block;
+`;
+
+const SmallImageWrapper = styled(ImageWrapper)`
+  width: 180px;
+  max-width: 180px;
+  margin-top: 8px;
+`;
+
+const SmallStyledImage = styled(StyledImage)`
+  width: 180px;
+  max-width: 180px;
+  border-radius: 10px;
+`;
+
 interface Image {
   prompt: string;
   url: string;
@@ -152,30 +185,28 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({
       {/* 显示历史消息 */}
       {conversation?.images.map((img, idx) => (
         <MessageGroup key={`history-${idx}`}>
-          <UserMessage>
-            <CreateImageText>创建图片</CreateImageText>
-            <UserPrompt>{img.prompt}</UserPrompt>
-          </UserMessage>
-
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+            {img.sourceImage && (
+              <SourceImageWrapper>
+                <SourceStyledImage src={img.sourceImage} alt="Source" />
+              </SourceImageWrapper>
+            )}
+            <UserMessage>
+              <CreateImageText>创建图片</CreateImageText>
+              <UserPrompt>{img.prompt}</UserPrompt>
+            </UserMessage>
+          </div>
           <AIMessage>
             <UserPrompt>图片已创建</UserPrompt>
-            <ImageWrapper>
-              <StyledImage src={img.url} alt={img.prompt} />
+            <SmallImageWrapper>
+              <SmallStyledImage src={img.url} alt={img.prompt} />
               <DownloadButton
                 className="download-icon"
                 onClick={() => handleDownload(img.url, img.prompt)}
               >
                 <DownloadOutlined />
               </DownloadButton>
-            </ImageWrapper>
-            {img.sourceImage && (
-              <div style={{ marginTop: '12px' }}>
-                <UserPrompt>原始图片</UserPrompt>
-                <ImageWrapper>
-                  <StyledImage src={img.sourceImage} alt="Source" />
-                </ImageWrapper>
-              </div>
-            )}
+            </SmallImageWrapper>
           </AIMessage>
         </MessageGroup>
       ))}
