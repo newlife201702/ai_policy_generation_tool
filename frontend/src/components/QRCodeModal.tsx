@@ -54,8 +54,8 @@ const QRCodeWrapper = styled.div`
     justify-content: center;
 
     .alipay-icon {
-      width: 16px;
-      height: 16px;
+      width: 25px;
+      height: 25px;
       margin-left: 4px;
     }
   }

@@ -5,7 +5,7 @@ import { Tabs, Form, Input, Button, message, Space, ConfigProvider, theme } from
 import styled from 'styled-components';
 import { setCredentials, logout } from '@/store/slices/authSlice';
 import { api } from '@/services/api';
-import { UserOutlined, LockOutlined } from '@ant-design/icons';
+import { UserOutlined, MailOutlined, LockOutlined } from '@ant-design/icons';
 import './index.css';
 import { RootState } from '@/store';
 
@@ -77,6 +77,10 @@ const Agreement = styled.div`
     color: #C9FF85;
     text-decoration: none;
   }
+`;
+
+const StyledFormItem = styled(Form.Item)`
+  margin-bottom: 30px;
 `;
 
 const Login: React.FC = () => {
@@ -278,7 +282,7 @@ const Login: React.FC = () => {
           initialValues={{ phone: '', code: '' }}
           validateTrigger={['onChange', 'onBlur']}
         >
-          <Form.Item
+          <StyledFormItem
             name="phone"
             rules={[
               { required: true, message: '请输入手机号' },
@@ -290,8 +294,8 @@ const Login: React.FC = () => {
               placeholder="请输入手机号码"
               size="large"
             />
-          </Form.Item>
-          <Form.Item>
+          </StyledFormItem>
+          <StyledFormItem>
             <Space.Compact style={{ width: '100%' }}>
               <Form.Item
                 name="code"
@@ -318,12 +322,12 @@ const Login: React.FC = () => {
                 {countdown > 0 ? `${countdown}秒后重试` : '获取验证码'}
               </VerifyButton>
             </Space.Compact>
-          </Form.Item>
-          <Form.Item>
+          </StyledFormItem>
+          <StyledFormItem>
             <LoginButton type="primary" htmlType="submit" loading={loginLoading} block>
               立即登录
             </LoginButton>
-          </Form.Item>
+          </StyledFormItem>
         </Form>
       ),
     },
@@ -338,7 +342,7 @@ const Login: React.FC = () => {
           initialValues={{ email: '', code: '' }}
           validateTrigger={['onChange', 'onBlur']}
         >
-          <Form.Item
+          <StyledFormItem
             name="email"
             rules={[
               { required: true, message: '请输入邮箱' },
@@ -346,12 +350,12 @@ const Login: React.FC = () => {
             ]}
           >
             <Input
-              prefix={<UserOutlined />}
+              prefix={<MailOutlined />}
               placeholder="请输入邮箱"
               size="large"
             />
-          </Form.Item>
-          <Form.Item>
+          </StyledFormItem>
+          <StyledFormItem>
             <Space.Compact style={{ width: '100%' }}>
               <Form.Item
                 name="code"
@@ -378,12 +382,12 @@ const Login: React.FC = () => {
                 {countdown > 0 ? `${countdown}秒后重试` : '获取验证码'}
               </VerifyButton>
             </Space.Compact>
-          </Form.Item>
-          <Form.Item>
+          </StyledFormItem>
+          <StyledFormItem>
             <LoginButton type="primary" htmlType="submit" loading={loginLoading} block>
               立即登录
             </LoginButton>
-          </Form.Item>
+          </StyledFormItem>
         </Form>
       ),
     },
