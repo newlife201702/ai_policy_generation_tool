@@ -241,26 +241,6 @@ const InitialChat: React.FC<{
   const company = urlParams.get('company');
 
   const [companyInfo, setCompanyInfo] = useState(company || '');
-  const [selectedCountry, setSelectedCountry] = useState<string[]>(
-    state ? state.split(',').map(item => item.trim()) : ['全部']
-  );
-  const [targetGroup, setTargetGroup] = useState(target || '不限');
-  const [model, setModel] = useState<'deepseek' | 'gpt4'>('deepseek');
-  const [loading, setLoading] = useState(false);
-  const [paymentModalVisible, setPaymentModalVisible] = useState(false);
-  const [paymentOptions, setPaymentOptions] = useState<PaymentOption[]>([]);
-  const [currentPlan, setCurrentPlan] = useState('');
-  const [contents, setContents] = useState<string[]>([]);
-  const hasGeneratedRef = useRef(false);
-
-  useEffect(() => {
-    // 如果所有参数都存在且还未生成过，则调用handleGenerateStrategy
-    if (state && target && company && !hasGeneratedRef.current) {
-      hasGeneratedRef.current = true;
-      handleGenerateStrategy();
-    }
-  }, [state, target, company]);
-
   const countryOptions: CountryOption[] = [
     { value: '全部', label: '全部' },
     { value: '中国', label: '中国' },
@@ -279,11 +259,45 @@ const InitialChat: React.FC<{
     { value: '印度', label: '印度' },
   ];
 
-  const handleCountryChange: SelectProps['onChange'] = (value: string | string[]) => {
-    if (Array.isArray(value)) {
-      setSelectedCountry(value);
+  const allCountryValues = countryOptions.filter(opt => opt.value !== '全部').map(opt => opt.value);
+
+  const [selectedCountry, setSelectedCountry] = useState<string[]>(
+    state ? state.split(',').map(item => item.trim()) : ['中国']
+  );
+  const [targetGroup, setTargetGroup] = useState(target || '不限');
+  const [model, setModel] = useState<'deepseek' | 'gpt4'>('deepseek');
+  const [loading, setLoading] = useState(false);
+  const [paymentModalVisible, setPaymentModalVisible] = useState(false);
+  const [paymentOptions, setPaymentOptions] = useState<PaymentOption[]>([]);
+  const [currentPlan, setCurrentPlan] = useState('');
+  const [contents, setContents] = useState<string[]>([]);
+  const hasGeneratedRef = useRef(false);
+
+  useEffect(() => {
+    // 如果所有参数都存在且还未生成过，则调用handleGenerateStrategy
+    if (state && target && company && !hasGeneratedRef.current) {
+      hasGeneratedRef.current = true;
+      handleGenerateStrategy();
+    }
+  }, [state, target, company]);
+
+  const handleCountryChange = (value: string[]) => {
+    if (value.includes('全部')) {
+      // 如果"全部"被选中，选中所有子选项
+      if (selectedCountry.length === allCountryValues.length) {
+        // 如果已经全选，再点"全部"则反选为全不选
+        setSelectedCountry([]);
+      } else {
+        setSelectedCountry(allCountryValues);
+      }
     } else {
-      setSelectedCountry([value]);
+      // 非"全部"操作
+      if (value.length === allCountryValues.length) {
+        // 如果手动全选所有子选项，"全部"自动选中
+        setSelectedCountry(allCountryValues);
+      } else {
+        setSelectedCountry(value);
+      }
     }
   };
 
