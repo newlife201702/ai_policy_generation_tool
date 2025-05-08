@@ -147,7 +147,7 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({ visible, onClose, amount, typ
 
   return (
     <StyledModal
-      title={<>扫码支付<span className="amount">{amount}元</span></>}
+      title={<>支付宝扫码支付<span className="amount">{amount}元</span></>}
       open={visible}
       onCancel={onClose}
       footer={null}

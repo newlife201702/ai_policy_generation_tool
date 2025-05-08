@@ -252,9 +252,9 @@ const ImageGen: React.FC = () => {
         // 显示支付选择弹窗
         const paymentOptions = [
           {
-            // amount: 19.8,
-            amount: 0.01,
-            title: '开通GPT4o绘画版',
+            amount: 19.8,
+            // amount: 0.01,
+            title: '体验版 19.8元 100次完整体验gpt4o生图功能',
             type: 'gpt4_drawing',
             subType: 'basic',
             features: [
@@ -266,7 +266,7 @@ const ImageGen: React.FC = () => {
           },
           {
             amount: 198,
-            title: '开通GPT4o绘画版',
+            title: '包年版 超值优惠 不限次数生成图片',
             type: 'gpt4_drawing',
             subType: 'premium',
             features: [
