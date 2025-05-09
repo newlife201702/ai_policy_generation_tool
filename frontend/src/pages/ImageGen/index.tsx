@@ -14,7 +14,9 @@ const { Content } = Layout;
 
 const StyledLayout = styled(Layout)`
   height: 100vh;
-  background: #000000;
+  background-image: url('../../../imgs/background.png');
+  background-size: cover;
+  background-position: center;
   display: flex;
   flex-direction: row;
 
@@ -30,7 +32,6 @@ const MainContent = styled(Content)`
   flex-direction: column;
   overflow: hidden;
   position: relative;
-  background: #000000;
 `;
 
 const ContentArea = styled.div<{ $isEmpty: boolean }>`
@@ -388,7 +389,7 @@ const ImageGen: React.FC = () => {
               <div style={{ position: 'relative' }}>
                 <EmptyState />
                 <ConfigProvider theme={{ algorithm: theme.defaultAlgorithm }}>
-                  <div style={{ position: 'relative', margin: '0 auto', maxWidth: '900px' }}>
+                  <div style={{ position: 'relative', margin: '0 auto', maxWidth: '1000px' }}>
                     <StyledTextArea
                       style={{ backgroundColor: '#ffffff', color: '#000000', paddingTop: imagePreview ? 72 : undefined }}
                       value={prompt}
@@ -443,9 +444,9 @@ const ImageGen: React.FC = () => {
           </ContentArea>
           {!isEmpty && (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-              <div style={{ position: 'relative', width: '100%', maxWidth: '900px' }}>
+              <div style={{ position: 'relative', width: '100%', maxWidth: '1000px' }}>
                 <ConfigProvider theme={{ algorithm: theme.defaultAlgorithm }}>
-                  <div style={{ position: 'relative', margin: '0 auto', maxWidth: '900px' }}>
+                  <div style={{ position: 'relative', margin: '0 auto', maxWidth: '1000px' }}>
                     <StyledTextArea
                       style={{ backgroundColor: '#ffffff', color: '#000000', paddingTop: imagePreview ? 72 : undefined }}
                       value={prompt}

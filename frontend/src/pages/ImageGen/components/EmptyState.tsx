@@ -6,21 +6,24 @@ const { Title, Text } = Typography;
 
 const Container = styled.div`
   text-align: center;
-  max-width: 900px;
+  max-width: 1000px;
   margin: 0 auto;
   padding: 40px 20px;
 `;
 
 const StyledTitle = styled(Title)`
   color: #fff !important;
-  margin-bottom: 16px !important;
+  margin-bottom: 20px !important;
+  font-size: 33px !important;
+  font-weight: 400 !important;
 `;
 
 const Description = styled(Text)`
-  color: #999 !important;
-  font-size: 16px;
+  max-width: 80%;
+  color: #fff !important;
+  font-size: 14px;
   display: block;
-  margin-bottom: 32px;
+  margin: 0px auto;
 `;
 
 const EmptyState: React.FC = () => {

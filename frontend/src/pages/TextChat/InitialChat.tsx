@@ -62,7 +62,7 @@ const MainTitle = styled.h1`
   color: white;
   text-align: center;
   margin-bottom: 20px;
-  font-size: 36px;
+  font-size: 33px;
   font-weight: 400;
   
   @media (max-width: 768px) {
@@ -71,11 +71,12 @@ const MainTitle = styled.h1`
 `;
 
 const Description = styled.p`
-  color: #cccccc;
+  color: #ffffff;
   text-align: center;
-  max-width: 810px;
+  max-width: 80%;
   margin-bottom: 40px;
   line-height: 1.6;
+  font-size: 14px;
   
   @media (max-width: 768px) {
     margin-bottom: 20px;
