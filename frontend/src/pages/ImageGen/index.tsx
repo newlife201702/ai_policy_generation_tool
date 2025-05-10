@@ -193,6 +193,7 @@ const ImageGen: React.FC = () => {
   const { token } = useAppSelector((state) => state.auth);
   const navigate = useNavigate();
   const [uploading, setUploading] = useState(false);
+  const contentAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchConversations();
@@ -369,6 +370,19 @@ const ImageGen: React.FC = () => {
   const currentConversation = conversations.find(conv => conv._id === selectedConversation);
   const isEmpty = !selectedConversation && !loading;
 
+  // 自动滚动到底部，确保在DOM更新后执行滚动
+  useEffect(() => {
+    // 使用setTimeout确保在浏览器完成渲染后执行
+    const timer = setTimeout(() => {
+      if (contentAreaRef.current) {
+        // 直接设置scrollTop
+        contentAreaRef.current.scrollTop = contentAreaRef.current.scrollHeight;
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [conversations]);
+
   return (
     <ConfigProvider theme={{ algorithm: theme.darkAlgorithm }}>
       <StyledLayout>
@@ -384,7 +398,7 @@ const ImageGen: React.FC = () => {
           onSelect={setSelectedConversation}
         /> */}
         <MainContent>
-          <ContentArea $isEmpty={isEmpty}>
+          <ContentArea $isEmpty={isEmpty} ref={contentAreaRef}>
             {isEmpty ? (
               <div style={{ position: 'relative' }}>
                 <EmptyState />
