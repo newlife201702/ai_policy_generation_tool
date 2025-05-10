@@ -1,6 +1,9 @@
 import React from 'react';
 import styled, { keyframes } from 'styled-components';
 import { DownloadOutlined } from '@ant-design/icons';
+import { Reveal } from 'react-awesome-reveal';
+import { keyframes as emotionKeyframes } from '@emotion/react';
+import { Image as AntdImage } from 'antd';
 
 const Container = styled.div`
   width: 100%;
@@ -36,7 +39,7 @@ const UserPrompt = styled.span`
 
 const AIMessage = styled.div`
   align-self: flex-start;
-  max-width: 80%;
+  max-width: 400px;
 `;
 
 const shimmer = keyframes`
@@ -100,32 +103,75 @@ const SourceImageWrapper = styled.div`
   margin-bottom: 4px;
   border-radius: 8px;
   overflow: hidden;
-  width: 48px;
-  height: 48px;
+  max-width: 200px;
   display: flex;
   align-items: center;
   justify-content: flex-end;
   background: none;
 `;
 
-const SourceStyledImage = styled.img`
-  width: 48px;
-  height: 48px;
+const SourceStyledImage = styled(AntdImage)`
+  max-width: 100%;
   border-radius: 6px;
   object-fit: cover;
-  display: block;
 `;
 
 const SmallImageWrapper = styled(ImageWrapper)`
-  width: 180px;
-  max-width: 180px;
   margin-top: 8px;
 `;
 
-const SmallStyledImage = styled(StyledImage)`
-  width: 180px;
-  max-width: 180px;
+const SmallStyledImage = styled(AntdImage)`
+  max-width: 100%;
   border-radius: 10px;
+`;
+
+const BlurMask = styled.div<{ $img: string }>`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+  // background: ${({ $img }) => `url('${$img}')`};
+  background: url('../../../../imgs/mohu.png');
+  background-size: cover;
+  background-position: center;
+`;
+
+const blurReveal = emotionKeyframes`
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(100%);
+  }
+`;
+
+const ShineText = styled.div`
+  position: relative;
+  display: inline-block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #222;
+  background: linear-gradient(110deg, #222 20%, #fff 40%, #fff 60%, #222 80%);
+  background-size: 200% 100%;
+  background-position: 200% 0;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shine-move 2.2s linear infinite;
+
+  @keyframes shine-move {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
 `;
 
 interface Image {
@@ -188,7 +234,7 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
             {img.sourceImage && (
               <SourceImageWrapper>
-                <SourceStyledImage src={img.sourceImage} alt="Source" />
+                <SourceStyledImage src={img.sourceImage} alt="Source" preview={true} />
               </SourceImageWrapper>
             )}
             <UserMessage>
@@ -198,8 +244,20 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({
           </div>
           <AIMessage>
             <UserPrompt>图片已创建</UserPrompt>
-            <SmallImageWrapper>
-              <SmallStyledImage src={img.url} alt={img.prompt} />
+            <SmallImageWrapper style={{ position: 'relative' }}>
+              <SmallStyledImage
+                src={img.url}
+                alt={img.prompt}
+                preview={true}
+              />
+              <Reveal
+                keyframes={blurReveal}
+                duration={3000}
+                triggerOnce
+                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+              >
+                <BlurMask $img={img.url} />
+              </Reveal>
               <DownloadButton
                 className="download-icon"
                 onClick={() => handleDownload(img.url, img.prompt)}
@@ -220,9 +278,12 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({
           </UserMessage>
 
           <AIMessage>
-            <ProcessingText>
-              正在生成图片，请稍候...
-            </ProcessingText>
+            <ShineText>正在创建图片</ShineText>
+            <SmallImageWrapper style={{ position: 'relative' }}>
+              <SmallStyledImage
+                src="../../../../imgs/empty-img.png"
+              />
+            </SmallImageWrapper>
           </AIMessage>
         </MessageGroup>
       )}
