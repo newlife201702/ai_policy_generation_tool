@@ -198,13 +198,18 @@ interface ImageDisplayProps {
   conversation?: Conversation;
   isGenerating?: boolean;
   currentPrompt?: string;
+  imageIndex?: number;
 }
 
 const ImageDisplay: React.FC<ImageDisplayProps> = ({ 
   conversation, 
   isGenerating,
-  currentPrompt 
+  currentPrompt,
+  imageIndex 
 }) => {
+  // 控制每张图片的可见性，初始为false，动画开始时设为true
+  const [imgVisible, setImgVisible] = React.useState<{ [idx: number]: boolean }>({});
+
   if (!conversation && !currentPrompt) {
     return null;
   }
@@ -242,35 +247,54 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({
               <UserPrompt>{img.prompt}</UserPrompt>
             </UserMessage>
           </div>
-          <AIMessage>
-            <UserPrompt>图片已创建</UserPrompt>
-            <SmallImageWrapper style={{ position: 'relative' }}>
-              <SmallStyledImage
-                src={img.url}
-                alt={img.prompt}
-                preview={true}
-              />
-              <Reveal
-                keyframes={blurReveal}
-                duration={3000}
-                triggerOnce
-                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
-              >
-                <BlurMask $img={img.url} />
-              </Reveal>
-              <DownloadButton
-                className="download-icon"
-                onClick={() => handleDownload(img.url, img.prompt)}
-              >
-                <DownloadOutlined />
-              </DownloadButton>
-            </SmallImageWrapper>
-          </AIMessage>
+          {isGenerating && currentPrompt && imageIndex === idx ? (
+            <AIMessage>
+              <ShineText>正在创建图片</ShineText>
+              <SmallImageWrapper style={{ position: 'relative' }}>
+                <SmallStyledImage
+                  src="../../../../imgs/empty-img.png"
+                />
+              </SmallImageWrapper>
+            </AIMessage>
+          ) : (
+            <AIMessage>
+              <UserPrompt>图片已创建</UserPrompt>
+              <SmallImageWrapper style={{ position: 'relative' }}>
+                <SmallStyledImage
+                  src={img.url}
+                  alt={img.prompt}
+                  preview={true}
+                  style={{ visibility: imgVisible[idx] ? 'visible' : 'hidden' }}
+                />
+                <Reveal
+                  keyframes={blurReveal}
+                  duration={3000}
+                  triggerOnce
+                  style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+                  onVisibilityChange={v => {
+                    if (v && !imgVisible[idx]) {
+                      setTimeout(() => {
+                        setImgVisible(s => ({ ...s, [idx]: true }));
+                      }, 500);
+                    }
+                  }}
+                >
+                  <BlurMask $img={img.url} />
+                </Reveal>
+                <DownloadButton
+                  className="download-icon"
+                  onClick={() => handleDownload(img.url, img.prompt)}
+                >
+                  <DownloadOutlined />
+                </DownloadButton>
+              </SmallImageWrapper>
+            </AIMessage>
+          )}
         </MessageGroup>
       ))}
 
       {/* 显示当前正在生成的消息 */}
-      {isGenerating && currentPrompt && (
+      {/* {isGenerating && currentPrompt && (
         <MessageGroup key="generating">
           <UserMessage>
             <CreateImageText>创建图片</CreateImageText>
@@ -286,7 +310,7 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({
             </SmallImageWrapper>
           </AIMessage>
         </MessageGroup>
-      )}
+      )} */}
     </Container>
   );
 };

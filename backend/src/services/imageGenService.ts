@@ -103,6 +103,27 @@ export class ImageGenService {
       }
 
       // 调用AI服务生成图片
+      // const response = await axios.post(
+      //   `${this.apiEndpoint}/v1/images/generations`,
+      //   {
+      //     model: 'Kwai-Kolors/Kolors',
+      //     prompt: params.prompt,
+      //     image_size: '1024x1024',
+      //     batch_size: 1,
+      //     num_inference_steps: 20,
+      //     guidance_scale: 7.5,
+      //     // 添加图生图相关参数
+      //     ...(params.type === 'img2img' && imageBase64 && {
+      //       image: imageBase64
+      //     })
+      //   },
+      //   {
+      //     headers: {
+      //       'Authorization': `Bearer ${this.apiKey}`,
+      //       'Content-Type': 'application/json',
+      //     },
+      //   }
+      // );
       const response = await axiosInstance.post(
         `${this.apiEndpoint}/v1/chat/completions`,
         {

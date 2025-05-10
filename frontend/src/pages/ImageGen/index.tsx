@@ -37,6 +37,7 @@ const MainContent = styled(Content)`
 const ContentArea = styled.div<{ $isEmpty: boolean }>`
   flex: 1;
   overflow-y: auto;
+  scrollBehavior: 'smooth' // 关键代码：添加平滑滚动
   margin-bottom: 20px;
   display: flex;
   flex-direction: column;
@@ -183,6 +184,7 @@ const ImageGen: React.FC = () => {
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [prompt, setPrompt] = useState(promptValue || '');
   const [currentPrompt, setCurrentPrompt] = useState<string>('');
+  const [imageIndex, setImageIndex] = useState<number>(-1);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -317,6 +319,24 @@ const ImageGen: React.FC = () => {
       }
     }
 
+    const imageObj = {
+      prompt,
+      type: imageFile ? 'img2img' : 'text2img',
+      sourceImage: imagePreview
+    };
+    setConversations(prevConversations => {
+      return prevConversations.map((conv, index) => {
+        if (conv._id === currentConversationId) {
+          setImageIndex(conv.images.length);
+          return {
+            ...conv,
+            images: [...conv.images, imageObj]
+          };
+        }
+        return conv;
+      });
+    });
+
     try {
       // 创建 FormData 对象并添加数据
       const formData = new FormData();
@@ -350,7 +370,10 @@ const ImageGen: React.FC = () => {
           if (conv._id === currentConversationId) {
             return {
               ...conv,
-              images: [...conv.images, response.data]
+              images: [...conv.images.slice(0, conv.images.length - 1), {
+                ...imageObj,
+                ...response.data
+              }]
             };
           }
           return conv;
@@ -364,6 +387,7 @@ const ImageGen: React.FC = () => {
     } finally {
       setLoading(false);
       setCurrentPrompt('');
+      setImageIndex(-1);
     }
   };
 
@@ -375,8 +399,8 @@ const ImageGen: React.FC = () => {
     // 使用setTimeout确保在浏览器完成渲染后执行
     const timer = setTimeout(() => {
       if (contentAreaRef.current) {
-        // 直接设置scrollTop
-        contentAreaRef.current.scrollTop = contentAreaRef.current.scrollHeight;
+        // 直接设置scrollTop，设置一个非常大的值（如1e10），浏览器会自动修正为最大可滚动值
+        contentAreaRef.current.scrollTop = 1e10; // 10,000,000,000
       }
     }, 500);
 
@@ -453,6 +477,7 @@ const ImageGen: React.FC = () => {
                 conversation={currentConversation} 
                 isGenerating={loading}
                 currentPrompt={currentPrompt}
+                imageIndex={imageIndex}
               />
             )}
           </ContentArea>
