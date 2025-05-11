@@ -21,6 +21,11 @@ export default defineConfig({
         target: 'http://47.94.59.198:5000',
         changeOrigin: true,
       },
+      // 新增 /uploads 代理
+      '/uploads': {
+        target: 'http://47.94.59.198:5000',
+        changeOrigin: true,
+      }
     },
   },
 }); 
