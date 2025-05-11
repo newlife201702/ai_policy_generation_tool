@@ -253,6 +253,7 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({
               <SmallImageWrapper style={{ position: 'relative' }}>
                 <SmallStyledImage
                   src="../../../../imgs/empty-img.png"
+                  key={`empty-img-${idx}`}
                 />
               </SmallImageWrapper>
             </AIMessage>
@@ -264,9 +265,10 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({
                   src={img.url}
                   alt={img.prompt}
                   preview={true}
-                  style={{ visibility: imgVisible[idx] ? 'visible' : 'hidden' }}
+                  // style={{ visibility: imgVisible[idx] ? 'visible' : 'hidden' }}
+                  key={`img-${idx}`}
                 />
-                <Reveal
+                {/* <Reveal
                   keyframes={blurReveal}
                   duration={3000}
                   triggerOnce
@@ -280,7 +282,7 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({
                   }}
                 >
                   <BlurMask $img={img.url} />
-                </Reveal>
+                </Reveal> */}
                 <DownloadButton
                   className="download-icon"
                   onClick={() => handleDownload(img.url, img.prompt)}
