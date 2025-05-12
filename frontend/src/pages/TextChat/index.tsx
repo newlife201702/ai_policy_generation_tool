@@ -11,6 +11,7 @@ import chatApi from '../../services/chatApi';
 import { SendOutlined, DeleteOutlined, MessageOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
 import { throttle } from 'lodash';
+import PageTitle from '../../components/PageTitle';
 
 // 添加所有缺失的样式组件
 const ChatContainer = styled.div`
@@ -682,52 +683,55 @@ const TextChat: React.FC = () => {
   };
 
   return (
-    <ChatContainer>
-      <Button
-        style={{ position: 'absolute', top: 20, right: 40, zIndex: 10 }}
-        onClick={() => navigate('/image-gen')}
-      >
-        跳转到生图功能
-      </Button>
-      {showHistory && (
-        <HistorySidebar>
-          <HistoryHeader>
-            <h3>历史记录</h3>
-            <Button type="text" danger onClick={handleClearHistory}>清空历史</Button>
-          </HistoryHeader>
-          <HistoryList 
-            data={history} 
-            onSelect={handleSelectHistory} 
-            onDelete={handleDeleteHistory} 
-          />
-        </HistorySidebar>
-      )}
-      
-      <ChatPanel>
-        <ChatHeader>
-          <Button 
-            type="text"
-            icon={<MessageOutlined />}
-            onClick={() => setShowHistory(!showHistory)}
-          />
-          <ModelSelect value={model} onChange={handleModelChange} />
-        </ChatHeader>
-        
-        {!chatStarted ? (
-          <InitialChat onStartChat={handleStartChat} />
-        ) : (
-          <ChatContent 
-            messages={messages}
-            onSendMessage={handleSendMessage}
-            onRegenerateMessage={handleRegenerateMessage}
-            loading={loading}
-            onNewChat={handleNewChat}
-            onSelectMessage={handleSelectMessage}
-            selectedMessageId={selectedMessageId}
-          />
+    <>
+      <PageTitle title="超级个体super-i ai品牌策略生成工具" />
+      <ChatContainer>
+        <Button
+          style={{ position: 'absolute', top: 20, right: 40, zIndex: 10 }}
+          onClick={() => navigate('/image-gen')}
+        >
+          跳转到生图功能
+        </Button>
+        {showHistory && (
+          <HistorySidebar>
+            <HistoryHeader>
+              <h3>历史记录</h3>
+              <Button type="text" danger onClick={handleClearHistory}>清空历史</Button>
+            </HistoryHeader>
+            <HistoryList 
+              data={history} 
+              onSelect={handleSelectHistory} 
+              onDelete={handleDeleteHistory} 
+            />
+          </HistorySidebar>
         )}
-      </ChatPanel>
-    </ChatContainer>
+        
+        <ChatPanel>
+          <ChatHeader>
+            <Button 
+              type="text"
+              icon={<MessageOutlined />}
+              onClick={() => setShowHistory(!showHistory)}
+            />
+            <ModelSelect value={model} onChange={handleModelChange} />
+          </ChatHeader>
+          
+          {!chatStarted ? (
+            <InitialChat onStartChat={handleStartChat} />
+          ) : (
+            <ChatContent 
+              messages={messages}
+              onSendMessage={handleSendMessage}
+              onRegenerateMessage={handleRegenerateMessage}
+              loading={loading}
+              onNewChat={handleNewChat}
+              onSelectMessage={handleSelectMessage}
+              selectedMessageId={selectedMessageId}
+            />
+          )}
+        </ChatPanel>
+      </ChatContainer>
+    </>
   );
 };
 

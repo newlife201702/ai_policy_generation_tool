@@ -9,6 +9,7 @@ import ImageDisplay from './components/ImageDisplay';
 import EmptyState from './components/EmptyState';
 import PaymentModal from '../../components/PaymentModal';
 import { useNavigate } from 'react-router-dom';
+import PageTitle from '../../components/PageTitle';
 
 const { Content } = Layout;
 
@@ -408,143 +409,146 @@ const ImageGen: React.FC = () => {
   }, [conversations]);
 
   return (
-    <ConfigProvider theme={{ algorithm: theme.darkAlgorithm }}>
-      <StyledLayout>
-        <Button
-          style={{ position: 'absolute', top: 20, right: 40, zIndex: 10 }}
-          onClick={() => navigate('/text-chat')}
-        >
-          跳转到策略生成工具
-        </Button>
-        {/* <ConversationList
-          conversations={conversations}
-          selectedId={selectedConversation}
-          onSelect={setSelectedConversation}
-        /> */}
-        <MainContent>
-          <ContentArea $isEmpty={isEmpty} ref={contentAreaRef}>
-            {isEmpty ? (
-              <div style={{ position: 'relative' }}>
-                <EmptyState />
-                <ConfigProvider theme={{ algorithm: theme.defaultAlgorithm }}>
-                  <div style={{ position: 'relative', margin: '0 auto', maxWidth: '1000px' }}>
-                    <StyledTextArea
-                      style={{ backgroundColor: '#ffffff', color: '#000000', paddingTop: imagePreview ? 72 : undefined }}
-                      value={prompt}
-                      onChange={e => setPrompt(e.target.value)}
-                      placeholder="请描述您要生成的图片"
-                      autoSize={{ minRows: 6, maxRows: 10 }}
-                    />
-                    {imagePreview && (
-                      <div style={{ position: 'absolute', top: 8, left: 8, width: 56, height: 56, zIndex: 2 }}>
-                        <img src={imagePreview} alt="缩略图" style={{ width: 56, height: 56, borderRadius: 6, objectFit: 'cover', boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }} />
-                        <Button
-                          size="small"
-                          shape="circle"
-                          icon={<CloseCircleFilled style={{ color: '#f5222d', fontSize: 16 }} />}
-                          style={{ position: 'absolute', top: -10, right: -10, zIndex: 3, background: 'white', boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }}
-                          onClick={handleRemoveImage}
-                        />
-                      </div>
-                    )}
-                  </div>
-                  <StyledUpload
-                    name="image"
-                    showUploadList={false}
-                    customRequest={({ file, onSuccess }: any) => {
-                      onSuccess();
-                    }}
-                    onChange={handleImageUpload}
-                    accept="image/*"
-                  >
-                    <Button icon={<UploadOutlined />} disabled={!!imageFile || uploading} />
-                  </StyledUpload>
-                </ConfigProvider>
-                <SendButton style={{ position: 'absolute', left: '15px', bottom: '15px', rotate: '0deg', padding: '8px 16px' }}>
-                  <ModelIcon src="../../../imgs/gpt-icon.png" />GPT-4o
-                </SendButton>
-                <SendButton
-                  shape="circle"
-                  icon={<ArrowUpOutlined />}
-                  onClick={beforeSubmit}
-                  disabled={loading || uploading || !prompt.trim()}
-                  type="primary"
-                  style={{ position: 'absolute', right: '15px', bottom: '15px' }}
+    <>
+      <PageTitle title="超级个体super-i gpt40绘图在线体验" />
+      <ConfigProvider theme={{ algorithm: theme.darkAlgorithm }}>
+        <StyledLayout>
+          <Button
+            style={{ position: 'absolute', top: 20, right: 40, zIndex: 10 }}
+            onClick={() => navigate('/text-chat')}
+          >
+            跳转到策略生成工具
+          </Button>
+          {/* <ConversationList
+            conversations={conversations}
+            selectedId={selectedConversation}
+            onSelect={setSelectedConversation}
+          /> */}
+          <MainContent>
+            <ContentArea $isEmpty={isEmpty} ref={contentAreaRef}>
+              {isEmpty ? (
+                <div style={{ position: 'relative' }}>
+                  <EmptyState />
+                  <ConfigProvider theme={{ algorithm: theme.defaultAlgorithm }}>
+                    <div style={{ position: 'relative', margin: '0 auto', maxWidth: '1000px' }}>
+                      <StyledTextArea
+                        style={{ backgroundColor: '#ffffff', color: '#000000', paddingTop: imagePreview ? 72 : undefined }}
+                        value={prompt}
+                        onChange={e => setPrompt(e.target.value)}
+                        placeholder="请描述您要生成的图片"
+                        autoSize={{ minRows: 6, maxRows: 10 }}
+                      />
+                      {imagePreview && (
+                        <div style={{ position: 'absolute', top: 8, left: 8, width: 56, height: 56, zIndex: 2 }}>
+                          <img src={imagePreview} alt="缩略图" style={{ width: 56, height: 56, borderRadius: 6, objectFit: 'cover', boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }} />
+                          <Button
+                            size="small"
+                            shape="circle"
+                            icon={<CloseCircleFilled style={{ color: '#f5222d', fontSize: 16 }} />}
+                            style={{ position: 'absolute', top: -10, right: -10, zIndex: 3, background: 'white', boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }}
+                            onClick={handleRemoveImage}
+                          />
+                        </div>
+                      )}
+                    </div>
+                    <StyledUpload
+                      name="image"
+                      showUploadList={false}
+                      customRequest={({ file, onSuccess }: any) => {
+                        onSuccess();
+                      }}
+                      onChange={handleImageUpload}
+                      accept="image/*"
+                    >
+                      <Button icon={<UploadOutlined />} disabled={!!imageFile || uploading} />
+                    </StyledUpload>
+                  </ConfigProvider>
+                  <SendButton style={{ position: 'absolute', left: '15px', bottom: '15px', rotate: '0deg', padding: '8px 16px' }}>
+                    <ModelIcon src="../../../imgs/gpt-icon.png" />GPT-4o
+                  </SendButton>
+                  <SendButton
+                    shape="circle"
+                    icon={<ArrowUpOutlined />}
+                    onClick={beforeSubmit}
+                    disabled={loading || uploading || !prompt.trim()}
+                    type="primary"
+                    style={{ position: 'absolute', right: '15px', bottom: '15px' }}
+                  />
+                </div>
+              ) : (
+                <ImageDisplay 
+                  conversation={currentConversation} 
+                  isGenerating={loading}
+                  currentPrompt={currentPrompt}
+                  imageIndex={imageIndex}
                 />
+              )}
+            </ContentArea>
+            {!isEmpty && (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ position: 'relative', width: '100%', maxWidth: '1000px' }}>
+                  <ConfigProvider theme={{ algorithm: theme.defaultAlgorithm }}>
+                    <div style={{ position: 'relative', margin: '0 auto', maxWidth: '1000px' }}>
+                      <StyledTextArea
+                        style={{ backgroundColor: '#ffffff', color: '#000000', paddingTop: imagePreview ? 72 : undefined }}
+                        value={prompt}
+                        onChange={e => setPrompt(e.target.value)}
+                        placeholder="请描述您要生成的图片"
+                        autoSize={{ minRows: 6, maxRows: 10 }}
+                      />
+                      {imagePreview && (
+                        <div style={{ position: 'absolute', top: 8, left: 8, width: 56, height: 56, zIndex: 2 }}>
+                          <img src={imagePreview} alt="缩略图" style={{ width: 56, height: 56, borderRadius: 6, objectFit: 'cover', boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }} />
+                          <Button
+                            size="small"
+                            shape="circle"
+                            icon={<CloseCircleFilled style={{ color: '#f5222d', fontSize: 16 }} />}
+                            style={{ position: 'absolute', top: -10, right: -10, zIndex: 3, background: 'white', boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }}
+                            onClick={handleRemoveImage}
+                          />
+                        </div>
+                      )}
+                    </div>
+                    <StyledUpload
+                      name="image"
+                      showUploadList={false}
+                      customRequest={({ file, onSuccess }: any) => {
+                        onSuccess();
+                      }}
+                      onChange={handleImageUpload}
+                      accept="image/*"
+                    >
+                      <Button icon={<UploadOutlined />} disabled={!!imageFile || uploading} />
+                    </StyledUpload>
+                  </ConfigProvider>
+                  <SendButton style={{ position: 'absolute', left: '15px', bottom: '15px', rotate: '0deg', padding: '8px 16px' }}>
+                    <ModelIcon src="../../../imgs/gpt-icon.png" />GPT-4o
+                  </SendButton>
+                  <SendButton
+                    shape="circle"
+                    icon={<ArrowUpOutlined />}
+                    onClick={beforeSubmit}
+                    disabled={loading || uploading || !prompt.trim()}
+                    type="primary"
+                    style={{ position: 'absolute', right: '15px', bottom: '15px' }}
+                  />
+                </div>
               </div>
-            ) : (
-              <ImageDisplay 
-                conversation={currentConversation} 
-                isGenerating={loading}
-                currentPrompt={currentPrompt}
-                imageIndex={imageIndex}
-              />
             )}
-          </ContentArea>
-          {!isEmpty && (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-              <div style={{ position: 'relative', width: '100%', maxWidth: '1000px' }}>
-                <ConfigProvider theme={{ algorithm: theme.defaultAlgorithm }}>
-                  <div style={{ position: 'relative', margin: '0 auto', maxWidth: '1000px' }}>
-                    <StyledTextArea
-                      style={{ backgroundColor: '#ffffff', color: '#000000', paddingTop: imagePreview ? 72 : undefined }}
-                      value={prompt}
-                      onChange={e => setPrompt(e.target.value)}
-                      placeholder="请描述您要生成的图片"
-                      autoSize={{ minRows: 6, maxRows: 10 }}
-                    />
-                    {imagePreview && (
-                      <div style={{ position: 'absolute', top: 8, left: 8, width: 56, height: 56, zIndex: 2 }}>
-                        <img src={imagePreview} alt="缩略图" style={{ width: 56, height: 56, borderRadius: 6, objectFit: 'cover', boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }} />
-                        <Button
-                          size="small"
-                          shape="circle"
-                          icon={<CloseCircleFilled style={{ color: '#f5222d', fontSize: 16 }} />}
-                          style={{ position: 'absolute', top: -10, right: -10, zIndex: 3, background: 'white', boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }}
-                          onClick={handleRemoveImage}
-                        />
-                      </div>
-                    )}
-                  </div>
-                  <StyledUpload
-                    name="image"
-                    showUploadList={false}
-                    customRequest={({ file, onSuccess }: any) => {
-                      onSuccess();
-                    }}
-                    onChange={handleImageUpload}
-                    accept="image/*"
-                  >
-                    <Button icon={<UploadOutlined />} disabled={!!imageFile || uploading} />
-                  </StyledUpload>
-                </ConfigProvider>
-                <SendButton style={{ position: 'absolute', left: '15px', bottom: '15px', rotate: '0deg', padding: '8px 16px' }}>
-                  <ModelIcon src="../../../imgs/gpt-icon.png" />GPT-4o
-                </SendButton>
-                <SendButton
-                  shape="circle"
-                  icon={<ArrowUpOutlined />}
-                  onClick={beforeSubmit}
-                  disabled={loading || uploading || !prompt.trim()}
-                  type="primary"
-                  style={{ position: 'absolute', right: '15px', bottom: '15px' }}
-                />
-              </div>
-            </div>
-          )}
-        </MainContent>
-        <PaymentModal
-          visible={paymentModalVisible}
-          onClose={() => setPaymentModalVisible(false)}
-          paymentOptions={paymentOptions}
-          currentPlan={currentPlan}
-          callback={() => {
-            setPaymentModalVisible(false);
-            handleSubmit();
-          }}
-        />
-      </StyledLayout>
-    </ConfigProvider>
+          </MainContent>
+          <PaymentModal
+            visible={paymentModalVisible}
+            onClose={() => setPaymentModalVisible(false)}
+            paymentOptions={paymentOptions}
+            currentPlan={currentPlan}
+            callback={() => {
+              setPaymentModalVisible(false);
+              handleSubmit();
+            }}
+          />
+        </StyledLayout>
+      </ConfigProvider>
+    </>
   );
 };
 
