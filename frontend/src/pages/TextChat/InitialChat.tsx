@@ -156,7 +156,6 @@ const StyledSelect = styled(Select)`
     background-color: #c9ff85 !important;
     border: none !important;
     height: 32px !important;
-    padding: 4px 11px !important;
     border-radius: 8px !important;
   }
   
@@ -410,7 +409,7 @@ const InitialChat: React.FC<{
           <InputSection>
             <InputBox>
               <StyledTextArea
-                placeholder="请输入您的公司介绍（公司介绍里可以包含产品介绍 核心优势 服务客户等 导入资料越详细结果会越准确）"
+                placeholder="请输入公司官网地址或提交详细的公司资料（如公司简介 产品介绍 核心优势 等信息越详细越好）"
                 autoSize={{ minRows: 6, maxRows: 10 }}
                 value={companyInfo}
                 onChange={(e) => setCompanyInfo(e.target.value)}

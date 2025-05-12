@@ -77,7 +77,7 @@ const StyledTextArea = styled(Input.TextArea)`
   background: #1a1a1a;
   border: 1px solid #333;
   color: #fff;
-  border-radius: 4px;
+  padding: 15px;
   
   &:hover, &:focus {
     border-color: #666;
@@ -430,7 +430,7 @@ const ImageGen: React.FC = () => {
                 <div style={{ position: 'relative' }}>
                   <EmptyState />
                   <ConfigProvider theme={{ algorithm: theme.defaultAlgorithm }}>
-                    <div style={{ position: 'relative', margin: '0 auto', maxWidth: '1000px' }}>
+                    <div style={{ position: 'relative', margin: '0 auto', maxWidth: '1000px', borderRadius: '8px', overflow: 'hidden' }}>
                       <StyledTextArea
                         style={{ backgroundColor: '#ffffff', color: '#000000', paddingTop: imagePreview ? 72 : undefined }}
                         value={prompt}
