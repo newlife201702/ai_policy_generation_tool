@@ -341,11 +341,11 @@ const InitialChat: React.FC<{
 
       // 将内容拆分成5个部分
       const contents = [
-        `公司信息: ${companyInfo}\n国家: ${selectedCountry.join(', ')}\n目标客户: ${targetGroup}\n请提供行业数据和市场情况分析（联网查询该行业相关信息并进行市场行业和趋势分析）。`,
-        `公司信息: ${companyInfo}\n国家: ${selectedCountry.join(', ')}\n目标客户: ${targetGroup}\n请提供15秒黄金内容提炼 ：结合市场分析结果，提炼公司最有优势且最契合用户宣传目的的关键优势提炼最核心的内容 按内容提炼/内容层次划分/用户阅读路径三个点罗列出来，并说明为什么要这么罗列的原因。`,
-        `公司信息: ${companyInfo}\n国家: ${selectedCountry.join(', ')}\n目标客户: ${targetGroup}\n根据罗列的内容分别说明，通过罗列的内容分别说明这些内容解决客户的哪些信任问题 （按产品信任 品牌信任 价值观信任区分）。`,
-        `公司信息: ${companyInfo}\n国家: ${selectedCountry.join(', ')}\n目标客户: ${targetGroup}\n根据客户做大的卖点，用巅峰体验做为标题：提供视觉或者文案内容的创意达到让浏览公司品牌门户网站时，用户眼前一亮并且产生深刻记忆点，可提供多种方案。`,
-        `公司信息: ${companyInfo}\n国家: ${selectedCountry.join(', ')}\n目标客户: ${targetGroup}\n根据以上全部内容，结合目前的网络推广途径，为客户整理出一套完善的品牌线上营销策略。`
+        `公司信息: ${companyInfo}\n国家: ${selectedCountry.join(', ')}\n目标客户: ${targetGroup}\n根据用户提供的信息，或提供的网址抓取整理出该公司的基本信息，同时通过这些基本信息，查询行业数据和市场情况，数据需要准确，可以是市场规模，行业趋势，行业白皮书等，并作出提炼和总结。`,
+        `公司信息: ${companyInfo}\n国家: ${selectedCountry.join(', ')}\n目标客户: ${targetGroup}\n请提供“15秒黄金内容”提炼 ：结合市场分析行业分析数据和结果，以及公司的基本资料，根据从主要到次要的先后顺序，提炼最核心的内容 以用户视角，将提炼的内容/用户阅读核心内容的路径罗列出来（需要说明这样子规划的原因），最后整理出思维导图。`,
+        `公司信息: ${companyInfo}\n国家: ${selectedCountry.join(', ')}\n目标客户: ${targetGroup}\n根据罗列出的思维导图，分别说明这些内容解决客户的哪些信任问题 （按产品信任 品牌信任 价值观信任区分）。`,
+        `公司信息: ${companyInfo}\n国家: ${selectedCountry.join(', ')}\n目标客户: ${targetGroup}\n根据客户做大的卖点，用巅峰体验做为标题：提供视觉或者文案内容的创意，达到让浏览公司品牌门户网站时，用户眼前一亮并且产生深刻记忆点，可提供多种方案，并建议客户品牌主视觉采用什么样的元素和色彩搭配，同时说明原因。`,
+        `公司信息: ${companyInfo}\n国家: ${selectedCountry.join(', ')}\n目标客户: ${targetGroup}\n根据客户要推广的国家，和客户群体类型，结合目前当地的网络推广途径，为客户整理出一套完善的品牌线上营销策略，越详细越好。`
       ];
       setContents(contents);
 
