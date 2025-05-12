@@ -19,7 +19,7 @@ const generateVerificationCode = () => {
 const generateToken = (userId: string) => {
   logger.info(`为用户 ${userId} 生成 token，使用密钥: ${env.jwtSecret.substring(0, 3)}...`);
   return jwt.sign({ userId }, env.jwtSecret, {
-    expiresIn: '7d',
+    expiresIn: '1d',
   });
 };
 

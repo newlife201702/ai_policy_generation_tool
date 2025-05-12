@@ -418,7 +418,7 @@ const InitialChat: React.FC<{
                 <StyledSelect
                   value={selectedCountry}
                   onChange={handleCountryChange}
-                  showSearch
+                  showSearch={false}
                   optionFilterProp="children"
                   filterOption={filterOption}
                   options={countryOptions}

@@ -148,6 +148,23 @@ const SendButton = styled(Button)`
   }
 `;
 
+const ButtonGroup = styled.div`
+  position: absolute;
+  top: 20px;
+  right: 40px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`;
+
+const HomeButton = styled(Button)`
+  position: absolute;
+  top: 20px;
+  left: 40px;
+  z-index: 10;
+`;
+
 interface Image {
   prompt: string;
   url: string;
@@ -413,12 +430,25 @@ const ImageGen: React.FC = () => {
       <PageTitle title="超级个体super-i gpt40绘图在线体验" />
       <ConfigProvider theme={{ algorithm: theme.darkAlgorithm }}>
         <StyledLayout>
-          <Button
-            style={{ position: 'absolute', top: 20, right: 40, zIndex: 10 }}
-            onClick={() => navigate('/text-chat')}
+          <HomeButton
+            onClick={() => window.location.href = 'http://super.mfdemo.cn/'}
           >
-            跳转到策略生成工具
-          </Button>
+            回到super-i首页
+          </HomeButton>
+          <ButtonGroup>
+            <Button
+              onClick={() => navigate('/text-chat')}
+            >
+              跳转到策略生成工具
+            </Button>
+            <Button
+              onClick={() => {
+                message.success('收藏成功！');
+              }}
+            >
+              收藏工具❤
+            </Button>
+          </ButtonGroup>
           {/* <ConversationList
             conversations={conversations}
             selectedId={selectedConversation}

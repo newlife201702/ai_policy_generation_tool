@@ -668,6 +668,7 @@ const ChatContent: React.FC<ChatContentProps> = ({
               // 点击画布空白处时取消选中
               onSelectMessage('');
             }}
+            proOptions={{ hideAttribution: true }}
           >
           </ReactFlow>
         </FlowContainer>
