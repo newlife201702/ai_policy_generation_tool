@@ -16,6 +16,19 @@ const initialState: AuthState = {
   user: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user') || 'null') : null,
 };
 
+// 设置 cookie 的辅助函数
+const setCookie = (name: string, value: string, days: number) => {
+  const date = new Date();
+  date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+  const expires = `expires=${date.toUTCString()}`;
+  document.cookie = `${name}=${value};${expires};path=/;domain=super-i.cn`;
+};
+
+// 删除 cookie 的辅助函数
+const deleteCookie = (name: string) => {
+  document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=super-i.cn`;
+};
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -33,6 +46,8 @@ const authSlice = createSlice({
       localStorage.setItem('token', token);
       if (user) {
         localStorage.setItem('user', JSON.stringify(user));
+        // 同时存储到 cookie
+        setCookie('user', JSON.stringify(user), 1); // 1天过期
       }
     },
     logout: (state) => {
@@ -43,6 +58,8 @@ const authSlice = createSlice({
       // 清除 localStorage
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+      // 清除 cookie
+      deleteCookie('user');
     },
   },
 });
