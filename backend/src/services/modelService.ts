@@ -120,8 +120,8 @@ class ModelService {
         return;
       }
 
-      const apiUrl = this.config.baseUrl === 'https://ark.cn-beijing.volces.com/api' ? `${this.config.baseUrl}/v3/chat/completions` : `${this.config.baseUrl}/v1/chat/completions`;
-      // const apiUrl = this.config.baseUrl === 'https://ark.cn-beijing.volces.com/api/v3/bots' ? `${this.config.baseUrl}/chat/completions` : `${this.config.baseUrl}/v1/chat/completions`;
+      // const apiUrl = this.config.baseUrl === 'https://ark.cn-beijing.volces.com/api' ? `${this.config.baseUrl}/v3/chat/completions` : `${this.config.baseUrl}/v1/chat/completions`;
+      const apiUrl = this.config.baseUrl === 'https://ark.cn-beijing.volces.com/api/v3/bots' ? `${this.config.baseUrl}/chat/completions` : `${this.config.baseUrl}/v1/chat/completions`;
       // const apiUrl = `${this.config.baseUrl}/v1/chat/completions`;
       logger.info(`调用模型流式 API: ${apiUrl}, 模型: ${this.config.model}`);
       
@@ -166,7 +166,7 @@ class ModelService {
             if (!line.trim() || line.startsWith(':')) continue;
             
             // 解析数据行
-            const jsonStr = line.replace(/^data: /, '').trim();
+            const jsonStr = line.replace(/^data:\s*/, '').trim();
             
             // 处理特殊的 [DONE] 标记
             if (jsonStr === '[DONE]') {
