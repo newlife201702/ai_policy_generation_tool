@@ -29,7 +29,7 @@ const Description = styled(Text)`
 const EmptyState: React.FC = () => {
   return (
     <Container>
-      <StyledTitle level={2}>国内网络，GPTplus版图片生成速度，低成本体验gpt4O生图功能</StyledTitle>
+      <StyledTitle level={2}>最新绘图大模型 GPT-4o Image plus版 在线体验</StyledTitle>
       {/* <Description>
         在这个竞争激烈的市场环境中，拥有一份清晰、精准的品牌策略至关重要。然而，制定品牌策略往往是一个复杂且耗时的过程。现在，我们为您提供一种全新的解决方案——一键生成品牌策略，快速、高效地帮助您的品牌脱颖而出。
       </Description> */}

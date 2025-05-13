@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { message, Select, List, Avatar, Button, Input, Spin } from 'antd';
+import { message, Select, List, Avatar, Button, Input, Spin, ConfigProvider, theme } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../store/hooks';
 import { api, fetchStreamResponse } from '../../utils/api';
@@ -140,6 +140,23 @@ const HistoryList: React.FC<{
   />
 );
 
+const ButtonGroup = styled.div`
+  position: absolute;
+  top: 20px;
+  right: 40px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`;
+
+const HomeButton = styled(Button)`
+  position: absolute;
+  top: 20px;
+  left: 40px;
+  z-index: 10;
+`;
+
 const TextChat: React.FC = () => {
   const navigate = useNavigate();
   const { token, isAuthenticated } = useAppSelector((state) => state.auth);
@@ -223,6 +240,7 @@ const TextChat: React.FC = () => {
           timestamp: new Date().toISOString(),
           isStreaming: true,
           parentId: '0',
+          // parentId: messagesRef.current[messagesRef.current.length- 1].id,
           model: selectedModel,
         };
         
@@ -686,12 +704,27 @@ const TextChat: React.FC = () => {
     <>
       <PageTitle title="超级个体super-i ai品牌策略生成工具" />
       <ChatContainer>
-        <Button
-          style={{ position: 'absolute', top: 20, right: 40, zIndex: 10 }}
-          onClick={() => navigate('/image-gen')}
-        >
-          跳转到生图功能
-        </Button>
+        <ConfigProvider theme={{ algorithm: theme.darkAlgorithm }}>
+          <HomeButton
+            onClick={() => window.location.href = 'http://super.mfdemo.cn/'}
+          >
+            回到super-i首页
+          </HomeButton>
+          <ButtonGroup>
+            <Button
+              onClick={() => navigate('/image-gen')}
+            >
+              跳转到生图功能
+            </Button>
+            <Button
+              onClick={() => {
+                message.success('收藏成功！');
+              }}
+            >
+              收藏工具❤
+            </Button>
+          </ButtonGroup>
+        </ConfigProvider>
         {showHistory && (
           <HistorySidebar>
             <HistoryHeader>

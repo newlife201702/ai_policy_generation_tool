@@ -115,10 +115,10 @@ const StyledButton = styled(Button)`
   color: #000000;
   font-weight: 500;
 
-  &:hover, &:focus {
-    background: #f5f5f5;
-    color: #000000;
-  }
+  // &:hover, &:focus {
+  //   background: #f5f5f5;
+  //   color: #000000;
+  // }
 `;
 
 interface PaymentOption {
@@ -164,7 +164,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ visible, onClose, paymentOp
           {currentPlan ? '升级你的套餐' : '选择合适你的套餐'}
         </Text>
         <Row gutter={[32, 32]}>
-          {paymentOptions.map((option) => (
+          {paymentOptions.map((option, index) => (
             <StyledCol key={`${option.type}-${option.subType}`} xs={24} md={12}>
               <PaymentOption>
                 <Title level={3} style={{ color: '#ffffff', marginBottom: '24px', fontSize: '24px' }}>
@@ -180,7 +180,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ visible, onClose, paymentOp
                 <StyledButton 
                   type="primary" 
                   onClick={() => handlePayNow(option.amount, option.type, option.subType)}
-                  disabled={currentPlan === option.subType}
+                  disabled={index === 1 || currentPlan === option.subType}
                 >
                   {currentPlan === option.subType ? '当前方案' : '立即支付'}
                 </StyledButton>
