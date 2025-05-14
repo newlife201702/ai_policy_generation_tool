@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Input, Button, Select, Typography, message } from 'antd';
+import { Input, Button, Select, Typography, message, ConfigProvider, theme } from 'antd';
 import type { TextAreaProps } from 'antd/es/input';
 import type { DefaultOptionType } from 'antd/es/select';
 import styled from 'styled-components';
@@ -469,17 +469,19 @@ const InitialChat: React.FC<{
           </BottomSection>
         </InputBottomSection>
       </ContentWrapper>
-      <PaymentModal
-        visible={paymentModalVisible}
-        onClose={() => setPaymentModalVisible(false)}
-        paymentOptions={paymentOptions}
-        currentPlan={currentPlan}
-        callback={() => {
-          setPaymentModalVisible(false);
-          // 调用父组件的onStartChat函数，传入拆分后的内容
-          onStartChat(contents, model);
-        }}
-      />
+      <ConfigProvider theme={{ algorithm: theme.darkAlgorithm }}>
+        <PaymentModal
+          visible={paymentModalVisible}
+          onClose={() => setPaymentModalVisible(false)}
+          paymentOptions={paymentOptions}
+          currentPlan={currentPlan}
+          callback={() => {
+            setPaymentModalVisible(false);
+            // 调用父组件的onStartChat函数，传入拆分后的内容
+            onStartChat(contents, model);
+          }}
+        />
+      </ConfigProvider>
     </Container>
   );
 };
