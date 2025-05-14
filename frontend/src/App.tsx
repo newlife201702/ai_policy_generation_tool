@@ -1,37 +1,51 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import Login from '@/pages/Login';
 import TextChat from '@/pages/TextChat';
 import ImageGen from '@/pages/ImageGen';
 import { RootState } from '@/store';
-import { setCredentials } from '@/store/slices/authSlice';
+import { setCredentials, logout } from '@/store/slices/authSlice';
+import { api } from '@/services/api';
 
 const App: React.FC = () => {
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
   const location = useLocation();
   const dispatch = useDispatch();
+  const [tokenVerified, setTokenVerified] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // 检查登录状态
+  // 验证token有效性
   useEffect(() => {
-    const checkAuth = () => {
+    const verifyToken = async () => {
       const token = localStorage.getItem('token');
       const user = localStorage.getItem('user');
       
-      if (token && user && !isAuthenticated) {
+      if (token && user) {
         try {
-          const userData = JSON.parse(user);
-          dispatch(setCredentials({ token, user: userData }));
-        } catch (e) {
-          console.error('解析用户数据失败:', e);
+          // 调用后端API验证token有效性
+          const response = await api.get('/auth/verify-token');
+          if (response.status === 200) {
+            const userData = JSON.parse(user);
+            dispatch(setCredentials({ token, user: userData }));
+            setTokenVerified(true);
+          }
+        } catch (error) {
+          console.error('Token验证失败:', error);
+          // Token无效，清除登录状态
           localStorage.removeItem('token');
           localStorage.removeItem('user');
+          dispatch(logout());
+        } finally {
+          setIsLoading(false);
         }
+      } else {
+        setIsLoading(false);
       }
     };
 
-    checkAuth();
-  }, [dispatch, isAuthenticated]);
+    verifyToken();
+  }, [dispatch]);
 
   // 处理重定向到登录页面的逻辑
   const getLoginRedirectUrl = () => {
@@ -47,18 +61,22 @@ const App: React.FC = () => {
     return `/login?from=${encodeURIComponent(location.pathname + location.search)}`;
   };
 
+  if (isLoading) {
+    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>加载中...</div>;
+  }
+
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route
         path="/text-chat"
-        element={isAuthenticated ? <TextChat /> : <Navigate to={getLoginRedirectUrl()} />}
+        element={isAuthenticated && tokenVerified ? <TextChat /> : <Navigate to={getLoginRedirectUrl()} />}
       />
       <Route
         path="/image-gen"
-        element={isAuthenticated ? <ImageGen /> : <Navigate to={getLoginRedirectUrl()} />}
+        element={isAuthenticated && tokenVerified ? <ImageGen /> : <Navigate to={getLoginRedirectUrl()} />}
       />
-      <Route path="/" element={<Navigate to={isAuthenticated ? "/text-chat" : "/login"} />} />
+      <Route path="/" element={<Navigate to={isAuthenticated && tokenVerified ? "/text-chat" : "/login"} />} />
     </Routes>
   );
 };

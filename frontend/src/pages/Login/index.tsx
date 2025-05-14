@@ -97,43 +97,49 @@ const Login: React.FC = () => {
 
   // 检查登录状态
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token && isAuthenticated) {
-      // 获取来源页面信息
-      const searchParams = new URLSearchParams(location.search);
-      const from = searchParams.get('from');
+    const checkTokenValidity = async () => {
+      const token = localStorage.getItem('token');
       
-      if (from) {
+      if (token) {
         try {
-          // 尝试解析来源URL
-          const fromUrl = new URL(from);
-          // 如果是外部网站，直接跳转回去
-          if (fromUrl.origin !== window.location.origin) {
-            window.location.href = from;
-            return;
+          // 验证token是否有效
+          const response = await api.get('/auth/verify-token');
+          
+          if (response.status === 200) {
+            // 获取来源页面信息
+            const searchParams = new URLSearchParams(location.search);
+            const from = searchParams.get('from');
+            
+            if (from) {
+              try {
+                // 尝试解析来源URL
+                const fromUrl = new URL(from);
+                // 如果是外部网站，直接跳转回去
+                if (fromUrl.origin !== window.location.origin) {
+                  window.location.href = from;
+                  return;
+                }
+              } catch (e) {
+                console.error('解析来源URL失败:', e);
+              }
+            }
+            
+            // 如果是内部页面或解析失败，使用默认值
+            const redirectUrl = from || location.state?.from || '/text-chat';
+            navigate(redirectUrl);
           }
-        } catch (e) {
-          console.error('解析来源URL失败:', e);
+        } catch (error) {
+          console.error('Token验证失败:', error);
+          // 清除无效的token
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          dispatch(logout());
         }
       }
-      
-      // 如果是内部页面或解析失败，使用默认值
-      const redirectUrl = from || location.state?.from || '/text-chat';
-      navigate(redirectUrl);
-    }
-  }, [isAuthenticated, location.search, location.state?.from, navigate]);
-
-  // 在组件加载时清除登录信息
-  // useEffect(() => {
-  //   const clearLoginInfo = () => {
-  //     console.log('清理登录信息');
-  //     localStorage.removeItem('token');
-  //     localStorage.removeItem('user');
-  //     dispatch(logout());
-  //   };
+    };
     
-  //   clearLoginInfo();
-  // }, [dispatch]);
+    checkTokenValidity();
+  }, [dispatch, isAuthenticated, location.search, location.state?.from, navigate]);
 
   // 重置表单
   const resetForm = () => {
