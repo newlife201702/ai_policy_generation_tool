@@ -157,6 +157,10 @@ const StyledSelect = styled(Select)`
     border: none !important;
     height: 32px !important;
     border-radius: 8px !important;
+
+    .ant-select-selection-wrap {
+      align-self: center;
+    }
   }
   
   .ant-select-selection-item {
