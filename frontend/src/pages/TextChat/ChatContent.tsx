@@ -416,12 +416,16 @@ const ChatContent: React.FC<ChatContentProps> = ({
   
     // 创建边
     const newEdges: Edge[] = assistantMessages
-      .concat(assistantMessages.filter(item => item.parentId === '0')
-        .map(message => ({
-          ...message,
+      .concat([
+        {
+          ...assistantMessages[1],
           parentId: '1'
-        }))
-      )
+        },
+        {
+          ...assistantMessages[5],
+          parentId: '1'
+        }
+      ])
       .filter(message => message.parentId)
       .map(message => ({
         id: `${message.parentId}-${message.id}`,
@@ -466,7 +470,8 @@ const ChatContent: React.FC<ChatContentProps> = ({
         y = 100;
       } else if (index < 7) {
         if (message.parentId) {
-          const parentNode = nodes.find(item => item.id === message.parentId);
+          // const parentNode = nodes.find(item => item.id === message.parentId);
+          const parentNode = nodes.find(item => item.id === '0');
           const nodeElement0 = document.querySelector(`[data-id="0"]`);
           const nodeHeight0 = nodeElement0?.offsetHeight || 0;
           const nodeElement1 = document.querySelector(`[data-id="1"]`);
@@ -491,6 +496,10 @@ const ChatContent: React.FC<ChatContentProps> = ({
         id: message.id,
         type: 'custom',
         data: message,
+        // data: {
+        //   ...message,
+        //   leftRightLayout: index >= 2 && index <= 6
+        // },
         position: { x, y },
         selectable: isLeafNode(message.id, newEdges)
       };
@@ -613,7 +622,7 @@ const ChatContent: React.FC<ChatContentProps> = ({
       >
         <Handle
           type="target"
-          position={Position.Top}
+          position={message.leftRightLayout ? Position.Left : Position.Top}
           isConnectable={isConnectable}
         />
         <ResponseContent>
@@ -636,7 +645,7 @@ const ChatContent: React.FC<ChatContentProps> = ({
         </ModelInfo>
         <Handle
           type="source"
-          position={Position.Bottom}
+          position={message.leftRightLayout ? Position.Right : Position.Bottom}
           isConnectable={isConnectable}
         />
       </ResponseBox>

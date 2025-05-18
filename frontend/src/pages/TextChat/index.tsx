@@ -239,8 +239,8 @@ const TextChat: React.FC = () => {
           content: '',
           timestamp: new Date().toISOString(),
           isStreaming: true,
-          parentId: '0',
-          // parentId: messagesRef.current[messagesRef.current.length- 1].id,
+          // parentId: '0',
+          parentId: messagesRef.current[messagesRef.current.length- 1].id,
           model: selectedModel,
         };
         
