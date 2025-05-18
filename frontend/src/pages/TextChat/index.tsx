@@ -372,6 +372,21 @@ const TextChat: React.FC = () => {
 
   // 定义一个睡眠函数
   const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+  const findParentChain = (items, startItem) => {
+    const result = [];
+    let currentItem = startItem;
+    
+    while (currentItem.parentId) {
+        const parent = items.find(item => item.id === currentItem.parentId);
+        if (!parent) break;
+        
+        result.push(parent);
+        currentItem = parent;
+    }
+    
+    return result;
+  };
   
   // 发送新消息
   const handleSendMessage = async (content: string, regenerateFlag?: boolean, parentId?: string, id?: string) => {
@@ -381,8 +396,9 @@ const TextChat: React.FC = () => {
     setLoading(true);
     
     const regenerateIndex = messagesRef.current.findIndex(obj => obj.id === parentId);
+    const regenerateMessages = findParentChain(messagesRef.current, { parentId }).reverse();
     const regenerateRequestData = {
-      messages: messagesRef.current.slice(0, regenerateIndex + 1),
+      messages: regenerateIndex <= 10 ? messagesRef.current.slice(0, regenerateIndex + 2) : regenerateMessages,
       model: model,
       id,
       parentId
@@ -434,9 +450,10 @@ const TextChat: React.FC = () => {
     
     try {
       // 准备请求数据
+      const parentDataIndex = messages.findIndex(obj => obj.id === selectedMessageId);
       const requestData = {
         messages: [
-          ...messages.map(msg => ({
+          ...messages.slice(0, parentDataIndex + 1).map(msg => ({
             role: msg.role,
             content: msg.content,
             timestamp: msg.timestamp
