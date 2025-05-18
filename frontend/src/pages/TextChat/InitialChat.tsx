@@ -448,11 +448,11 @@ const InitialChat: React.FC<{
                   <ModelIcon src="../../../imgs/deepseek-icon.png" />Deepseek
                 </div>
               </Option>
-              <Option value="gpt4">
+              {/* <Option value="gpt4">
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                   <ModelIcon src="../../../imgs/gpt-icon.png" />GPT-4o mini
                 </div>
-              </Option>
+              </Option> */}
             </ModelSelect>
             
             <StartButton
