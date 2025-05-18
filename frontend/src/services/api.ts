@@ -25,16 +25,16 @@ api.interceptors.request.use(
 );
 
 // 响应拦截器
-api.interceptors.response.use(
-  (response) => {
-    return response;
-  },
-  (error) => {
-    if (error.response?.status === 401) {
-      // 未授权，清除token并跳转到登录页
-      localStorage.removeItem('token');
-      window.location.href = '/login';
-    }
-    return Promise.reject(error);
-  }
-); 
+// api.interceptors.response.use(
+//   (response) => {
+//     return response;
+//   },
+//   (error) => {
+//     if (error.response?.status === 401) {
+//       // 未授权，清除token并跳转到登录页
+//       localStorage.removeItem('token');
+//       window.location.href = '/login';
+//     }
+//     return Promise.reject(error);
+//   }
+// ); 

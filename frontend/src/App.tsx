@@ -45,7 +45,7 @@ const App: React.FC = () => {
     };
 
     verifyToken();
-  }, [dispatch]);
+  }, []);
 
   // 处理重定向到登录页面的逻辑
   const getLoginRedirectUrl = () => {
@@ -67,7 +67,7 @@ const App: React.FC = () => {
 
   return (
     <Routes>
-      <Route path="/login" element={<Login />} />
+      <Route path="/login" element={<Login setTokenVerified={setTokenVerified} />} />
       <Route
         path="/text-chat"
         element={isAuthenticated && tokenVerified ? <TextChat /> : <Navigate to={getLoginRedirectUrl()} />}

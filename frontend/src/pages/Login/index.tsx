@@ -83,7 +83,7 @@ const StyledFormItem = styled(Form.Item)`
   margin-bottom: 30px;
 `;
 
-const Login: React.FC = () => {
+const Login: React.FC = ({ setTokenVerified }) => {
   const [phoneForm] = Form.useForm();
   const [emailForm] = Form.useForm();
   const navigate = useNavigate();
@@ -106,6 +106,7 @@ const Login: React.FC = () => {
           const response = await api.get('/auth/verify-token');
           
           if (response.status === 200) {
+            setTokenVerified(true);
             // 获取来源页面信息
             const searchParams = new URLSearchParams(location.search);
             const from = searchParams.get('from');
@@ -139,7 +140,7 @@ const Login: React.FC = () => {
     };
     
     checkTokenValidity();
-  }, [dispatch, isAuthenticated, location.search, location.state?.from, navigate]);
+  }, []);
 
   // 重置表单
   const resetForm = () => {
