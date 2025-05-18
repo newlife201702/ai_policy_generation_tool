@@ -127,8 +127,8 @@ const MessageActions = styled.div`
 `;
 
 const ResponseBox = styled.div`
-  max-width: 200px;
-  min-width: 200px;
+  max-width: 250px;
+  min-width: 250px;
   background-color: #171717;
   border-radius: 24px;
   border: 2px solid #262626;
@@ -454,8 +454,8 @@ const ChatContent: React.FC<ChatContentProps> = ({
       let x = 0;
       let y = 0;
       // 节点宽度和间距
-      const nodeWidth = 200;
-      const gap = 100; // 节点之间的间距
+      const nodeWidth = 250;
+      const gap = 50; // 节点之间的间距
       const gapY = 100; // 节点之间的间距
       // 获取视口尺寸（这里容器占满整个视口）
       const viewportWidth = window.innerWidth;
