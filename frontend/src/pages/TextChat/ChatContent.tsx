@@ -21,6 +21,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import './index.css';
+import { debounce } from 'lodash';
 
 // 定义扩展的消息类型
 interface ExtendedMessage extends Message {
@@ -391,8 +392,9 @@ const ChatContent: React.FC<ChatContentProps> = ({
     return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false })}`;
   };
 
-  const isLeafNode = (nodeId, edges) => {
-    return !edges.some(edge => edge.source === nodeId);
+  const isLeafNode = (nodeId, role, edges) => {
+    // return !edges.some(edge => edge.source === nodeId);
+    return role!== 'user';
   };
 
   const renderFlowithStyle = () => {
@@ -501,11 +503,19 @@ const ChatContent: React.FC<ChatContentProps> = ({
         //   leftRightLayout: index >= 2 && index <= 6
         // },
         position: { x, y },
-        selectable: isLeafNode(message.id, newEdges)
+        selectable: isLeafNode(message.id, message.role, newEdges)
       };
     });
     setNodes(newNodes);
   };
+  
+  // 创建一个防抖的重生成函数
+  const debouncedRegenerate = useMemo(
+    () => debounce((message: ExtendedMessage) => {
+      onRegenerateMessage(message);
+    }, 1000, { leading: true, trailing: false }),
+    [onRegenerateMessage]
+  );
   
   // 修改renderTraditionalChat函数
   const renderTraditionalChat = () => {
@@ -564,7 +574,7 @@ const ChatContent: React.FC<ChatContentProps> = ({
               icon={<ReloadOutlined />} 
               onClick={(e) => {
                 e.stopPropagation();
-                onRegenerateMessage(message);
+                debouncedRegenerate(message);
               }}
             />}
             <Button 
