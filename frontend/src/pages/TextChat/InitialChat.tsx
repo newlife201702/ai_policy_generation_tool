@@ -409,7 +409,7 @@ const InitialChat: React.FC<{
           <InputSection>
             <InputBox>
               <StyledTextArea
-                placeholder="请输入公司官网地址或提交详细的公司资料（如公司简介 产品介绍 核心优势 等信息越详细越好）"
+                placeholder="输入公司详细资料（如公司简介 产品介绍 核心优势 等信息越详细越好）"
                 autoSize={{ minRows: 6, maxRows: 10 }}
                 value={companyInfo}
                 onChange={(e) => setCompanyInfo(e.target.value)}
