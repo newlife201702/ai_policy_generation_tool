@@ -33,7 +33,7 @@ export class ImageGenService {
     // this.apiEndpoint = 'https://api.siliconflow.cn';
     // this.apiKey = 'sk-fkcwndlwyfywjxmiumiyvyvnmtzcblllkcnisrfvufawdtep';
     this.apiEndpoint = 'https://api.xi-ai.cn';
-    this.apiKey = 'sk-PNSSUJbbrwZ4ZCpo90CfBdC05e834c70AcF10185007b6461';
+    this.apiKey = 'sk-wW0StH8enCqyPjUEC1783339A0Ec4121A31499954dEf8918';
     // 设置基础URL，用于生成图片访问地址
     this.baseUrl = process.env.BASE_URL || 'http://localhost:5000';
 
