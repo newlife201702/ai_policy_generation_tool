@@ -431,7 +431,7 @@ const ImageGen: React.FC = () => {
       <ConfigProvider theme={{ algorithm: theme.darkAlgorithm }}>
         <StyledLayout>
           <HomeButton
-            onClick={() => window.location.href = 'http://super.mfdemo.cn/'}
+            onClick={() => window.location.href = 'https://www.super-i.cn/'}
           >
             回到super-i首页
           </HomeButton>
