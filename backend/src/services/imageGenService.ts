@@ -23,6 +23,37 @@ export interface GenerateImageParams {
   sourceImage?: string;
 }
 
+const parseImageUrlFromStream = (streamData: string): string | null => {
+  // 按行分割数据
+  const lines = streamData.split('\n').filter(line => line.trim() !== '');
+
+  for (const line of lines) {
+    // 跳过非数据行
+    if (!line.startsWith('data: ')) continue;
+
+    // 提取 JSON 数据部分
+    const jsonStr = line.slice(6); // 去掉 'data: ' 前缀
+    if (jsonStr === '[DONE]') continue;
+
+    try {
+      const data = JSON.parse(jsonStr);
+      const content = data.choices[0]?.delta?.content;
+      
+      if (content && content.includes('https://filesystem.site/cdn/')) {
+        // 使用正则表达式提取完整的图片 URL
+        const urlMatch = content.match(/https:\/\/filesystem\.site\/cdn\/[^\s)]+/);
+        if (urlMatch && urlMatch[0]) {
+          return urlMatch[0];
+        }
+      }
+    } catch (e) {
+      console.error('Error parsing JSON:', e);
+    }
+  }
+
+  return null;
+};
+
 export class ImageGenService {
   private static instance: ImageGenService;
   private readonly apiEndpoint: string;
@@ -153,44 +184,16 @@ export class ImageGenService {
             'Authorization': `Bearer ${this.apiKey}`,
             'Content-Type': 'application/json',
           },
-          responseType: 'stream'
+          // responseType: 'stream'
         }
       );
 
       // 处理流式响应
-      let imageUrl = '';
-      let content = '';
-      
-      for await (const chunk of response.data) {
-        const lines = chunk.toString().split('\n');
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') {
-              break;
-            }
-            
-            try {
-              const parsed = JSON.parse(data);
-              if (parsed.choices?.[0]?.delta?.content) {
-                content += parsed.choices[0].delta.content;
-                
-                // 从内容中提取图片URL
-                const urlMatch = content.match(/https:\/\/filesystem\.site\/cdn\/[^)]+\.png/);
-                if (urlMatch) {
-                  imageUrl = urlMatch[0];
-                  break;
-                }
-              }
-            } catch (e) {
-              console.error('Error parsing chunk:', e);
-            }
-          }
-        }
-        
-        if (imageUrl) {
-          break;
-        }
+      const imageUrl = parseImageUrlFromStream(response.data);
+      if (imageUrl) {
+          console.log('Found image URL:', imageUrl);
+      } else {
+          console.log('No image URL found in the stream data');
       }
 
       if (!imageUrl) {
