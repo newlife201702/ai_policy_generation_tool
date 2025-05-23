@@ -258,39 +258,45 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({
               </SmallImageWrapper>
             </AIMessage>
           ) : (
-            <AIMessage>
-              <UserPrompt>图片已创建</UserPrompt>
-              <SmallImageWrapper style={{ position: 'relative' }}>
-                <SmallStyledImage
-                  src={img.url}
-                  alt={img.prompt}
-                  preview={true}
-                  // style={{ visibility: imgVisible[idx] ? 'visible' : 'hidden' }}
-                  key={`img-${idx}`}
-                />
-                {/* <Reveal
-                  keyframes={blurReveal}
-                  duration={3000}
-                  triggerOnce
-                  style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
-                  onVisibilityChange={v => {
-                    if (v && !imgVisible[idx]) {
-                      setTimeout(() => {
-                        setImgVisible(s => ({ ...s, [idx]: true }));
-                      }, 500);
-                    }
-                  }}
-                >
-                  <BlurMask $img={img.url} />
-                </Reveal> */}
-                <DownloadButton
-                  className="download-icon"
-                  onClick={() => handleDownload(img.url, img.prompt)}
-                >
-                  <DownloadOutlined />
-                </DownloadButton>
-              </SmallImageWrapper>
-            </AIMessage>
+            img.url ? (
+              <AIMessage>
+                <UserPrompt>图片已创建</UserPrompt>
+                <SmallImageWrapper style={{ position: 'relative' }}>
+                  <SmallStyledImage
+                    src={img.url}
+                    alt={img.prompt}
+                    preview={true}
+                    // style={{ visibility: imgVisible[idx] ? 'visible' : 'hidden' }}
+                    key={`img-${idx}`}
+                  />
+                  {/* <Reveal
+                    keyframes={blurReveal}
+                    duration={3000}
+                    triggerOnce
+                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+                    onVisibilityChange={v => {
+                      if (v && !imgVisible[idx]) {
+                        setTimeout(() => {
+                          setImgVisible(s => ({ ...s, [idx]: true }));
+                        }, 500);
+                      }
+                    }}
+                  >
+                    <BlurMask $img={img.url} />
+                  </Reveal> */}
+                  <DownloadButton
+                    className="download-icon"
+                    onClick={() => handleDownload(img.url, img.prompt)}
+                  >
+                    <DownloadOutlined />
+                  </DownloadButton>
+                </SmallImageWrapper>
+              </AIMessage>
+            ) : (
+              <AIMessage>
+                <UserPrompt>生成图片失败</UserPrompt>
+              </AIMessage>
+            )
           )}
         </MessageGroup>
       ))}
