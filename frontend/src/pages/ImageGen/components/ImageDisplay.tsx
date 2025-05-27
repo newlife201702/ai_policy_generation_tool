@@ -8,8 +8,12 @@ import { Image as AntdImage } from 'antd';
 const Container = styled.div`
   width: 100%;
   max-width: 800px;
-  margin: 30px auto 0px;
+  margin: 110px auto 0px;
   padding: 20px;
+
+  @media (max-width: 768px) {
+    margin: 0px auto 0px;
+  }
 `;
 
 const MessageGroup = styled.div`
