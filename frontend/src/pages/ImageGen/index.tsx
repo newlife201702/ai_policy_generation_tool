@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Layout, Input, Button, Upload, message, Spin, ConfigProvider, theme } from 'antd';
-import { UploadOutlined, ArrowUpOutlined, CloseCircleFilled } from '@ant-design/icons';
+import { UploadOutlined, ArrowUpOutlined, CloseCircleFilled, HomeOutlined, MessageOutlined, StarOutlined, LogoutOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
 import axios from 'axios';
 import { useAppSelector } from '../../store/hooks';
@@ -158,6 +158,10 @@ const ButtonGroup = styled.div`
   display: flex;
   flex-direction: column;
   gap: 10px;
+
+  @media (max-width: 768px) {
+    display: none;
+  }
 `;
 
 const HomeButton = styled(Button)`
@@ -165,6 +169,51 @@ const HomeButton = styled(Button)`
   top: 20px;
   left: 300px;
   z-index: 10;
+
+  @media (max-width: 768px) {
+    display: none;
+  }
+`;
+
+const MobileNav = styled.div`
+  display: none;
+  background: #1a1a1a;
+  border-top: 1px solid #333;
+  padding: 8px 16px;
+  z-index: 1000;
+
+  @media (max-width: 768px) {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+  }
+`;
+
+const MobileNavButton = styled(Button)`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: #fff;
+  padding: 8px;
+  height: auto;
+  line-height: 1.2;
+
+  &:hover {
+    background: #333 !important;
+    color: #fff !important;
+  }
+
+  .anticon {
+    font-size: 20px;
+    margin-bottom: 4px;
+  }
+
+  span {
+    font-size: 12px;
+  }
 `;
 
 interface Image {
@@ -590,6 +639,26 @@ const ImageGen: React.FC = () => {
               handleSubmit();
             }}
           />
+          <MobileNav>
+            <MobileNavButton onClick={() => window.location.href = 'https://www.super-i.cn/'}>
+              <HomeOutlined />
+              <span>首页</span>
+            </MobileNavButton>
+            <MobileNavButton onClick={() => navigate('/text-chat')}>
+              <MessageOutlined />
+              <span>策略生成</span>
+            </MobileNavButton>
+            <MobileNavButton onClick={() => {
+              message.success('收藏成功！');
+            }}>
+              <StarOutlined />
+              <span>收藏</span>
+            </MobileNavButton>
+            <MobileNavButton onClick={handleLogout}>
+              <LogoutOutlined />
+              <span>退出</span>
+            </MobileNavButton>
+          </MobileNav>
         </StyledLayout>
       </ConfigProvider>
     </>
