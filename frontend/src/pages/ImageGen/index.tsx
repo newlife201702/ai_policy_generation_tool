@@ -163,7 +163,7 @@ const ButtonGroup = styled.div`
 const HomeButton = styled(Button)`
   position: absolute;
   top: 20px;
-  left: 40px;
+  left: 300px;
   z-index: 10;
 `;
 
@@ -463,11 +463,11 @@ const ImageGen: React.FC = () => {
             </Button>
             <Button onClick={handleLogout}>退出登录</Button>
           </ButtonGroup>
-          {/* <ConversationList
+          <ConversationList
             conversations={conversations}
             selectedId={selectedConversation}
             onSelect={setSelectedConversation}
-          /> */}
+          />
           <MainContent>
             <ContentArea $isEmpty={isEmpty} ref={contentAreaRef}>
               {isEmpty ? (
