@@ -21,7 +21,7 @@ const Container = styled.div<{ $isExpanded: boolean }>`
     left: ${props => props.$isExpanded ? '0' : '-260px'};
     top: 0;
     bottom: 0;
-    z-index: 1000;
+    z-index: 2000;
     width: 260px;
     height: 100vh;
     border-right: 1px solid #333;
@@ -48,7 +48,7 @@ const ToggleButton = styled(Button)`
   position: fixed;
   left: 10px;
   top: 10px;
-  z-index: 1001;
+  z-index: 2001;
   background: #1a1a1a;
   border: 1px solid #333;
   color: #fff;
