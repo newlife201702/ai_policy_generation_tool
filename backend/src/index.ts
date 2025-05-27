@@ -57,6 +57,9 @@ mongoose.connection.on('disconnected', () => {
 });
 
 // 启动服务器
-app.listen(port, () => {
+const server = app.listen(port, () => {
   logger.info(`Server is running on port ${port}`);
-}); 
+});
+
+// 设置服务器超时为5分钟（单位：毫秒）
+server.timeout = 300000;

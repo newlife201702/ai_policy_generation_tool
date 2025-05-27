@@ -372,7 +372,11 @@ const ImageGen: React.FC = () => {
 
       // 发送请求时不要将 Content-Type 设置为 multipart/form-data，
       // 让浏览器自动设置正确的 boundary
-      const response = await axios.post(
+      // 创建一个 axios 实例
+      const axiosInstance = axios.create({
+        timeout: 600000, // 10分钟超时
+      });
+      const response = await axiosInstance.post(
         `/api/image-gen/${currentConversationId}/generate`,
         formData,
         {
