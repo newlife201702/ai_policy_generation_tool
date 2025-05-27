@@ -12,6 +12,8 @@ import { SendOutlined, DeleteOutlined, MessageOutlined } from '@ant-design/icons
 import styled from 'styled-components';
 import { throttle } from 'lodash';
 import PageTitle from '../../components/PageTitle';
+import { useDispatch } from 'react-redux';
+import { logout } from '@/store/slices/authSlice';
 
 // 添加所有缺失的样式组件
 const ChatContainer = styled.div`
@@ -159,6 +161,7 @@ const HomeButton = styled(Button)`
 
 const TextChat: React.FC = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { token, isAuthenticated } = useAppSelector((state) => state.auth);
   const [messages, setMessages] = useState<ExtendedMessage[]>([]);
   const [loading, setLoading] = useState(false);
@@ -717,6 +720,12 @@ const TextChat: React.FC = () => {
     setSelectedMessageId(messageId);
   };
 
+  // 添加退出登录处理函数
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate('/login');
+  };
+
   return (
     <>
       <PageTitle title="超级个体super-i ai品牌策略生成工具" />
@@ -740,6 +749,7 @@ const TextChat: React.FC = () => {
             >
               收藏工具❤
             </Button>
+            <Button onClick={handleLogout}>退出登录</Button>
           </ButtonGroup>
         </ConfigProvider>
         {showHistory && (

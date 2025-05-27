@@ -10,6 +10,8 @@ import EmptyState from './components/EmptyState';
 import PaymentModal from '../../components/PaymentModal';
 import { useNavigate } from 'react-router-dom';
 import PageTitle from '../../components/PageTitle';
+import { useDispatch } from 'react-redux';
+import { logout } from '@/store/slices/authSlice';
 
 const { Content } = Layout;
 
@@ -214,6 +216,7 @@ const ImageGen: React.FC = () => {
   const navigate = useNavigate();
   const [uploading, setUploading] = useState(false);
   const contentAreaRef = useRef<HTMLDivElement>(null);
+  const dispatch = useDispatch();
 
   useEffect(() => {
     fetchConversations();
@@ -429,6 +432,12 @@ const ImageGen: React.FC = () => {
     return () => clearTimeout(timer);
   }, [conversations]);
 
+  // 添加退出登录处理函数
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate('/login');
+  };
+
   return (
     <>
       <PageTitle title="超级个体super-i gpt40绘图在线体验" />
@@ -452,6 +461,7 @@ const ImageGen: React.FC = () => {
             >
               收藏工具❤
             </Button>
+            <Button onClick={handleLogout}>退出登录</Button>
           </ButtonGroup>
           {/* <ConversationList
             conversations={conversations}
