@@ -1,30 +1,40 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { Typography } from 'antd';
+import { Typography, Button } from 'antd';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
+import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
 
 const { Text } = Typography;
 
-const Container = styled.div`
+const Container = styled.div<{ $isExpanded: boolean }>`
   width: 260px;
   background: #1a1a1a;
   border-right: 1px solid #333;
   display: flex;
   flex-direction: column;
   height: 100vh;
+  transition: all 0.3s ease;
 
   @media (max-width: 768px) {
-    width: 100%;
-    height: auto;
-    border-right: none;
-    border-bottom: 1px solid #333;
+    position: fixed;
+    left: ${props => props.$isExpanded ? '0' : '-260px'};
+    top: 0;
+    bottom: 0;
+    z-index: 1000;
+    width: 260px;
+    height: 100vh;
+    border-right: 1px solid #333;
+    box-shadow: ${props => props.$isExpanded ? '2px 0 8px rgba(0,0,0,0.15)' : 'none'};
   }
 `;
 
 const Header = styled.div`
   padding: 20px;
   border-bottom: 1px solid #333;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   
   h2 {
     color: #fff;
@@ -33,14 +43,31 @@ const Header = styled.div`
   }
 `;
 
+const ToggleButton = styled(Button)`
+  display: none;
+  position: fixed;
+  left: 10px;
+  top: 10px;
+  z-index: 1001;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  color: #fff;
+
+  @media (max-width: 768px) {
+    display: block;
+  }
+
+  &:hover {
+    background: #333 !important;
+    border-color: #444 !important;
+    color: #fff !important;
+  }
+`;
+
 const List = styled.div`
   flex: 1;
   overflow-y: auto;
   padding: 10px;
-
-  @media (max-width: 768px) {
-    max-height: 200px;
-  }
 
   /* 美化滚动条 */
   &::-webkit-scrollbar {
@@ -115,30 +142,64 @@ const ConversationList: React.FC<ConversationListProps> = ({
   selectedId,
   onSelect
 }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // 检测是否为移动端
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+      if (window.innerWidth <= 768) {
+        setIsExpanded(false);
+      } else {
+        setIsExpanded(true);
+      }
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  const toggleExpand = () => {
+    setIsExpanded(!isExpanded);
+  };
+
   return (
-    <Container>
-      <Header>
-        <h2>GPT-4o生图</h2>
-      </Header>
-      <List>
-        {conversations.map((conversation) => (
-          <ConversationItem
-            key={conversation._id}
-            $selected={selectedId === conversation._id}
-            onClick={() => onSelect(conversation._id)}
-          >
-            <ItemTitle>
-              {conversation.images.length > 0
-                ? conversation.images[conversation.images.length - 1].prompt
-                : conversation.title}
-            </ItemTitle>
-            <ItemDate>
-              {format(new Date(conversation.createdAt), 'MM月dd日 HH:mm', { locale: zhCN })}
-            </ItemDate>
-          </ConversationItem>
-        ))}
-      </List>
-    </Container>
+    <>
+      <ToggleButton
+        icon={isExpanded ? <MenuFoldOutlined /> : <MenuUnfoldOutlined />}
+        onClick={toggleExpand}
+      />
+      <Container $isExpanded={isExpanded}>
+        <Header>
+          <h2>GPT-4o生图</h2>
+        </Header>
+        <List>
+          {conversations.map((conversation) => (
+            <ConversationItem
+              key={conversation._id}
+              $selected={selectedId === conversation._id}
+              onClick={() => {
+                onSelect(conversation._id);
+                if (isMobile) {
+                  setIsExpanded(false);
+                }
+              }}
+            >
+              <ItemTitle>
+                {conversation.images.length > 0
+                  ? conversation.images[conversation.images.length - 1].prompt
+                  : conversation.title}
+              </ItemTitle>
+              <ItemDate>
+                {format(new Date(conversation.createdAt), 'MM月dd日 HH:mm', { locale: zhCN })}
+              </ItemDate>
+            </ConversationItem>
+          ))}
+        </List>
+      </Container>
+    </>
   );
 };
 
