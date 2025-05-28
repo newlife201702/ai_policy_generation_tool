@@ -158,10 +158,6 @@ const ButtonGroup = styled.div`
   display: flex;
   flex-direction: column;
   gap: 10px;
-
-  @media (max-width: 768px) {
-    display: none;
-  }
 `;
 
 const HomeButton = styled(Button)`
@@ -171,7 +167,7 @@ const HomeButton = styled(Button)`
   z-index: 10;
 
   @media (max-width: 768px) {
-    display: none;
+    left: 75px;
   }
 `;
 
@@ -639,7 +635,7 @@ const ImageGen: React.FC = () => {
               handleSubmit();
             }}
           />
-          <MobileNav>
+          {/* <MobileNav>
             <MobileNavButton onClick={() => window.location.href = 'https://www.super-i.cn/'}>
               <HomeOutlined />
               <span>首页</span>
@@ -658,7 +654,7 @@ const ImageGen: React.FC = () => {
               <LogoutOutlined />
               <span>退出</span>
             </MobileNavButton>
-          </MobileNav>
+          </MobileNav> */}
         </StyledLayout>
       </ConfigProvider>
     </>
