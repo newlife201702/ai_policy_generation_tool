@@ -2,6 +2,7 @@ import { alipaySdk } from '../config/alipayConfig';
 import { PaymentOrder } from '../models/PaymentOrder';
 import { createLogger } from '../utils/logger';
 import { v4 as uuidv4 } from 'uuid';
+import { User } from '../models/user';
 
 const logger = createLogger('paymentService');
 
@@ -89,6 +90,18 @@ class PaymentService {
         if (result.tradeStatus === 'TRADE_SUCCESS') {
           order.status = 'SUCCESS';
           await order.save();
+        
+          // 根据订单类型增加用户的使用次数
+          const user = await User.findById(order.userId);
+          // console.log('userId-order', order.userId, 'user-order', user);
+          if (user) {
+            if (order.type === 'brand_explorer') {
+              user.textChatRemainingCount += 100;
+            } else if (order.type === 'gpt4_drawing') {
+              user.imageGenRemainingCount += 50;
+            }
+            await user.save();
+          }
         } else if (result.tradeStatus === 'TRADE_CLOSED') {
           order.status = 'FAILED';
           await order.save();
@@ -173,6 +186,37 @@ class PaymentService {
   }
 
   /**
+   * 获取用户服务可使用次数
+   * @param userId 用户ID
+   * @param type 产品类型
+   * @param startDate 开始计数的日期
+   */
+  private async getUserServiceUsage(userId: string, type: string, startDate: Date): Promise<number> {
+    try {
+      const user = await User.findById(userId);
+      // console.log('userId-Usage', userId, 'user-Usage', user);
+      if (!user) {
+        throw new Error('用户不存在');
+      }
+
+      if (type === 'brand_explorer') {
+        return user.textChatRemainingCount || 0;
+      } else if (type === 'gpt4_drawing') {
+        return user.imageGenRemainingCount || 0;
+      }
+
+      return 0;
+    } catch (error) {
+      logger.error('获取用户服务可使用次数失败', {
+        error,
+        userId,
+        type
+      });
+      throw error;
+    }
+  }
+
+  /**
    * 检查用户是否可以继续使用服务
    * @param userId 用户ID
    * @param type 产品类型
@@ -185,7 +229,7 @@ class PaymentService {
   }> {
     try {
       const order = await this.getUserPaymentStatus(userId, type);
-      
+
       if (!order) {
         return {
           canUse: false,
@@ -194,21 +238,23 @@ class PaymentService {
         };
       }
 
-      // 如果是基础版(9.9元)，需要检查使用次数
+      // 如果是基础版，需要检查使用次数
       if (order.subType === 'basic') {
-        // 获取用户在当前订单后的使用次数
-        const usageCount = await this.getUserServiceUsage(userId, type, order.createdAt);
+        // 获取用户当前剩余使用次数
+        const remainingCount = await this.getUserServiceUsage(userId, type, order.createdAt);
         
-        if (usageCount >= 100) {  // 如果已经使用了100次
+        // 如果剩余次数为0，则不能继续使用
+        if (remainingCount <= 0) {
           return {
             canUse: false,
             needPayment: true,
-            currentPlan: 'basic'
+            // currentPlan: 'basic'
+            currentPlan: null
           };
         }
       }
 
-      // 高级版或基础版未超限
+      // 高级版或基础版有剩余次数，可以继续使用
       return {
         canUse: true,
         needPayment: false,
@@ -222,19 +268,6 @@ class PaymentService {
       });
       throw error;
     }
-  }
-
-  /**
-   * 获取用户服务使用次数
-   * @param userId 用户ID
-   * @param type 产品类型
-   * @param startDate 开始计数的日期
-   */
-  private async getUserServiceUsage(userId: string, type: string, startDate: Date): Promise<number> {
-    // TODO: 实现具体的使用次数统计逻辑
-    // 这里需要根据你的业务逻辑来实现
-    // 可能需要查询对话记录表或其他相关表
-    return 0;
   }
 }
 

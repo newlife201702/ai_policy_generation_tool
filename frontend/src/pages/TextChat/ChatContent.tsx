@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Input, Button, message as antMessage, Spin, ConfigProvider, theme } from 'antd';
+import { Input, Button, message as antMessage, Spin, ConfigProvider, theme, message } from 'antd';
 import {
   SendOutlined,
   ReloadOutlined,
@@ -22,6 +22,9 @@ import {
 import '@xyflow/react/dist/style.css';
 import './index.css';
 import { debounce } from 'lodash';
+import PaymentModal from '../../components/PaymentModal';
+import axios from 'axios';
+import { useAppSelector } from '../../store/hooks';
 
 // 定义扩展的消息类型
 interface ExtendedMessage extends Message {
@@ -324,6 +327,14 @@ interface ChatContentProps {
   selectedMessageId: string | null;
 }
 
+interface PaymentOption {
+  amount: number;
+  title: string;
+  type: string;
+  subType: string;
+  features: string[];
+}
+
 const ChatContent: React.FC<ChatContentProps> = ({
   messages,
   onSendMessage,
@@ -333,10 +344,16 @@ const ChatContent: React.FC<ChatContentProps> = ({
   onSelectMessage,
   selectedMessageId
 }) => {
+  const { token } = useAppSelector((state) => state.auth);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges] = useEdgesState([]);
   const [inputValue, setInputValue] = useState('');
+  const [paymentModalVisible, setPaymentModalVisible] = useState(false);
+  const [paymentOptions, setPaymentOptions] = useState<PaymentOption[]>([]);
+  const [currentPlan, setCurrentPlan] = useState('');
   const chatAreaRef = useRef<HTMLDivElement>(null);
+  const generateType = useRef('');
+  const generateParam = useRef(null);
   
   useEffect(() => {
     // 滚动到底部
@@ -356,7 +373,9 @@ const ChatContent: React.FC<ChatContentProps> = ({
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSend();
+      // handleSend();
+      generateType.current = 'handleSend';
+      handleGenerateStrategy();
     }
   };
   
@@ -574,7 +593,10 @@ const ChatContent: React.FC<ChatContentProps> = ({
               icon={<ReloadOutlined />} 
               onClick={(e) => {
                 e.stopPropagation();
-                debouncedRegenerate(message);
+                // debouncedRegenerate(message);
+                generateType.current = 'debouncedRegenerate';
+                generateParam.current = message;
+                handleGenerateStrategy();
               }}
             />}
             <Button 
@@ -664,6 +686,66 @@ const ChatContent: React.FC<ChatContentProps> = ({
   
   // 然后在节点定义中使用 type: 'custom'
   const nodeTypes = useMemo(() => ({ custom: CustomNode }), []);
+  
+  const handleGenerateStrategy = async () => {
+    try {
+      // 检查用户是否有权限使用服务
+      const response = await axios.get('/api/payment/check-access', {
+        params: {
+          type: 'brand_explorer'
+        },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+  
+      const { canUse, needPayment, currentPlan } = response.data;
+
+      if (canUse) {
+        if (generateType.current === 'handleSend') {
+          handleSend();
+        } else if (generateType.current === 'debouncedRegenerate') {
+          debouncedRegenerate(generateParam.current);
+        }
+      } else {
+        // 显示支付选择弹窗
+        const paymentOptions: PaymentOption[] = [
+          {
+            amount: 9.9,
+            // amount: 0.01,
+            title: '开通品牌探索流',
+            type: 'brand_explorer',
+            subType: 'basic',
+            features: [
+              '可以使用思维导图生成',
+              '100次对话',
+              '可以修改内容',
+              '支持商用'
+            ]
+          },
+          {
+            amount: 99,
+            title: '开通品牌探索流',
+            type: 'brand_explorer',
+            subType: 'premium',
+            features: [
+              '可以使用思维导图生成',
+              '可以无限生成',
+              '可以修改内容',
+              '支持商用'
+            ]
+          }
+        ];
+
+        setPaymentModalVisible(true);
+        setPaymentOptions(paymentOptions);
+        setCurrentPlan(currentPlan);
+      }
+    } catch (error) {
+      message.error('检查服务访问权限失败');
+    }
+  };
 
   return (
     <ConfigProvider
@@ -712,12 +794,30 @@ const ChatContent: React.FC<ChatContentProps> = ({
             <SendButton
               type="primary"
               icon={<SendOutlined />}
-              onClick={handleSend}
+              onClick={() => {
+                // handleSend();
+                generateType.current = 'handleSend';
+                handleGenerateStrategy();
+              }}
               disabled={!inputValue.trim() || loading}
             />
           </InputContainer>
         )}
       </Container>
+      <PaymentModal
+        visible={paymentModalVisible}
+        onClose={() => setPaymentModalVisible(false)}
+        paymentOptions={paymentOptions}
+        currentPlan={currentPlan}
+        callback={() => {
+          setPaymentModalVisible(false);
+          if (generateType.current === 'handleSend') {
+            handleSend();
+          } else if (generateType.current === 'debouncedRegenerate') {
+            debouncedRegenerate(generateParam.current);
+          }
+        }}
+      />
     </ConfigProvider>
   );
 };

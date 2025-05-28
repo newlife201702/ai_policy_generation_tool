@@ -194,7 +194,7 @@ class ModelService {
                   if (streamRes.flush) {
                     streamRes.flush();
                   }
-                  logger.debug(`发送内容片段: "${delta.content}"`);
+                  // logger.debug(`发送内容片段: "${delta.content}"`);
                 }
               }
             } catch (parseError) {

@@ -6,6 +6,7 @@ import { downloadAndSaveImage } from '../utils/imageUtils';
 import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
+import { User } from '../models/user';
 
 const logger = createLogger('imageGenService');
 
@@ -219,6 +220,14 @@ export class ImageGenService {
 
       conversation.images?.push(generatedImage);
       await conversation.save();
+
+      // 减少用户生图功能的可用次数
+      const user = await User.findById(conversation.userId);
+      // console.log('userId-img', conversation.userId, 'user-img', user);
+      if (user) {
+        user.imageGenRemainingCount -= 1;
+        await user.save();
+      }
 
       return generatedImage;
     } catch (error) {

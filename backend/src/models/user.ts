@@ -6,6 +6,8 @@ export interface IUser extends Document {
   phone?: string;
   verificationCode?: string;
   verificationCodeExpires?: Date;
+  textChatRemainingCount: number;
+  imageGenRemainingCount: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -39,6 +41,14 @@ const userSchema = new Schema<IUser>(
     },
     verificationCode: String,
     verificationCodeExpires: Date,
+    textChatRemainingCount: {
+      type: Number,
+      default: 0,
+    },
+    imageGenRemainingCount: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,

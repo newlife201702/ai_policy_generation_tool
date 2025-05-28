@@ -5,6 +5,7 @@ import { Message } from '../types/chat';
 import { modelService } from '../services/modelService';
 import { ChatHistory } from '../models/chatHistory';
 import { env } from '../config/env';
+import { User } from '../models/user';
 
 const logger = createLogger('chat');
 
@@ -138,7 +139,7 @@ export const chatController = {
               const json = JSON.parse(jsonStr);
               if (json.content) {
                 fullContent += json.content;
-                logger.debug(`累积内容长度: ${fullContent.length}`);
+                // logger.debug(`累积内容长度: ${fullContent.length}`);
               } else if (json.fullContent) {
                 fullContent = json.fullContent;
                 logger.debug(`使用完整内容替换, 长度: ${fullContent.length}`);
@@ -171,6 +172,14 @@ export const chatController = {
             });
             await chatHistory.save();
             logger.info('消息历史记录保存成功');
+
+            // 减少用户文字对话功能的可用次数
+            const user = await User.findById(userId);
+            // console.log('userId-text', userId, 'user-text', user);
+            if (user) {
+              user.textChatRemainingCount -= 1;
+              await user.save();
+            }
           } else {
             logger.warn('流式响应结束，但没有内容可保存');
           }
