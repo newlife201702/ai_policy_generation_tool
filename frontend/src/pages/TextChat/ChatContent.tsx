@@ -4,6 +4,7 @@ import {
   SendOutlined,
   ReloadOutlined,
   CopyOutlined,
+  DeleteOutlined,
 } from '@ant-design/icons';
 import styled from 'styled-components';
 import ReactMarkdown from 'react-markdown';
@@ -319,6 +320,7 @@ const MarkdownStyles = styled.div`
 
 interface ChatContentProps {
   messages: ExtendedMessage[];
+  setMessages: (messages: ExtendedMessage[]) => void;
   onSendMessage: (content: string) => Promise<void>;
   onRegenerateMessage: (message: ExtendedMessage) => Promise<void>;
   loading: boolean;
@@ -337,6 +339,7 @@ interface PaymentOption {
 
 const ChatContent: React.FC<ChatContentProps> = ({
   messages,
+  setMessages,
   onSendMessage,
   onRegenerateMessage,
   loading,
@@ -354,8 +357,15 @@ const ChatContent: React.FC<ChatContentProps> = ({
   const chatAreaRef = useRef<HTMLDivElement>(null);
   const generateType = useRef('');
   const generateParam = useRef(null);
+  const messagesRef = useRef<ExtendedMessage[]>([]);
+  const selectedMessageIdRef = useRef<string | null>(null);
   
   useEffect(() => {
+    selectedMessageIdRef.current = selectedMessageId;
+  }, [selectedMessageId]);
+  
+  useEffect(() => {
+    messagesRef.current = messages;
     // 滚动到底部
     if (chatAreaRef.current) {
       chatAreaRef.current.scrollTop = chatAreaRef.current.scrollHeight;
@@ -420,7 +430,10 @@ const ChatContent: React.FC<ChatContentProps> = ({
     
     // 找到用户消息和助手消息
     const userMessages = messages.filter(msg => msg.role === 'user' && !msg.hidden);
-    const assistantMessages = messages.filter(msg => !msg.hidden);
+    const assistantMessages = messages.map((msg, index) => ({
+      ...msg,
+      index
+    })).filter(msg => !msg.hidden);
     
     if (userMessages.length === 0 || assistantMessages.length === 0) return null;
     
@@ -608,6 +621,14 @@ const ChatContent: React.FC<ChatContentProps> = ({
                 antMessage.success('已复制到剪贴板');
               }}
             />
+            {message.index >= 11 && <Button 
+              type="text" 
+              icon={<DeleteOutlined />} 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteMessage(message.id);
+              }}
+            />}
           </MessageActions>
         </MessageContent>
       </MessageWrapper>
@@ -745,6 +766,35 @@ const ChatContent: React.FC<ChatContentProps> = ({
     } catch (error) {
       message.error('检查服务访问权限失败');
     }
+  };
+
+  const handleDeleteMessage = (messageId: string) => {
+    if (messageId === selectedMessageIdRef.current) {
+      onSelectMessage('');
+    }
+    // 1. 递归查找所有子消息
+    const findChildMessages = (parentId: string): string[] => {
+      // 找到所有以 parentId 为父ID的消息
+      const children = messagesRef.current.filter(msg => msg.parentId === parentId);
+      // 获取这些子消息的ID
+      const childIds = children.map(child => child.id);
+      // 递归查找每个子消息的子消息
+      const grandChildren = children.flatMap(child => findChildMessages(child.id));
+      // 返回所有子消息ID的数组
+      return [...childIds, ...grandChildren];
+    };
+  
+    // 2. 找到要删除的消息
+    const messageToDelete = messagesRef.current.find(msg => msg.id === messageId);
+    if (!messageToDelete) return;
+  
+    // 3. 获取所有需要删除的消息ID
+    const childMessageIds = findChildMessages(messageId);
+    const allIdsToDelete = [messageId, ...childMessageIds];
+  
+    // 4. 从消息列表中删除该消息及其所有子消息
+    const updatedMessages = messagesRef.current.filter(msg => !allIdsToDelete.includes(msg.id));
+    setMessages(updatedMessages);
   };
 
   return (

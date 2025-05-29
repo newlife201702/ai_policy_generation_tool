@@ -789,6 +789,7 @@ const TextChat: React.FC = () => {
           ) : (
             <ChatContent 
               messages={messages}
+              setMessages={setMessages}
               onSendMessage={handleSendMessage}
               onRegenerateMessage={handleRegenerateMessage}
               loading={loading}
