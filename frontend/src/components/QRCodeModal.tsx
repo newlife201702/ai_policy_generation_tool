@@ -173,7 +173,7 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({ visible, onClose, amount, typ
         <div className="payment-hint">
           请扫码完成支付
           <img 
-            src="../../imgs/zhifubao-icon.png" 
+            src="../../imgs/zhifubao-icon.svg" 
             alt="支付宝" 
             className="alipay-icon"
           />
