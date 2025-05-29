@@ -778,7 +778,7 @@ const ChatContent: React.FC<ChatContentProps> = ({
           onClick={onNewChat}
           size="large"
         >
-          生成新的内容 ↵
+          重新生成全部内容 ↵
         </NewChatButton>
         
         {selectedMessageId && (
