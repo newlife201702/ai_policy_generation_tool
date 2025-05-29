@@ -180,7 +180,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ visible, onClose, paymentOp
                 <StyledButton 
                   type="primary" 
                   onClick={() => handlePayNow(option.amount, option.type, option.subType)}
-                  disabled={index === 1 || currentPlan === option.subType}
+                  disabled={currentPlan === option.subType}
                 >
                   {currentPlan === option.subType ? '当前方案' : '立即支付'}
                 </StyledButton>
