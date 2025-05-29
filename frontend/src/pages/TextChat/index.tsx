@@ -597,6 +597,14 @@ const TextChat: React.FC = () => {
   const handleRegenerateMessage = async (message: ExtendedMessage) => {
     const parentMessage = messagesRef.current.find(item => item.id === message.parentId);
     console.log('message', message, 'messages', messages, 'messagesRef.current', messagesRef.current, 'parentMessage', parentMessage);
+    setMessages(prev => {
+      const newMessages = [...prev];
+      const lastMessage = newMessages.find(msg => msg.id === message.id);
+      if (lastMessage && lastMessage.role === 'assistant') {
+        lastMessage.content = '';
+      }
+      return newMessages;
+    });
     
     if (parentMessage) {
       // 重新生成回复
