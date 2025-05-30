@@ -239,7 +239,7 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({
     <Container>
       {/* 显示历史消息 */}
       {conversation?.images.map((img, idx) => (
-        <MessageGroup key={`history-${idx}`}>
+        <MessageGroup key={`history-${img._id}`}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
             {img.sourceImage && (
               <SourceImageWrapper>
@@ -257,7 +257,7 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({
               <SmallImageWrapper style={{ position: 'relative' }}>
                 <SmallStyledImage
                   src="../../../../imgs/empty-img.png"
-                  key={`empty-img-${idx}`}
+                  key={`empty-img-${img._id}`}
                 />
               </SmallImageWrapper>
             </AIMessage>
@@ -271,7 +271,7 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({
                     alt={img.prompt}
                     preview={true}
                     // style={{ visibility: imgVisible[idx] ? 'visible' : 'hidden' }}
-                    key={`img-${idx}`}
+                    key={`img-${img._id}`}
                   />
                   {/* <Reveal
                     keyframes={blurReveal}
