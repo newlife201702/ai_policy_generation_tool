@@ -2,11 +2,12 @@ import { Types } from 'mongoose';
 import { Conversation, IConversation } from '../models/conversation';
 import { AppError } from '../middleware/errorHandler';
 import { createLogger } from '../utils/logger';
-import { downloadAndSaveImage } from '../utils/imageUtils';
+import { downloadAndSaveImage, saveBase64ImageToFile } from '../utils/imageUtils';
 import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
 import { User } from '../models/user';
+import FormData from "form-data";
 
 const logger = createLogger('imageGenService');
 
@@ -64,8 +65,10 @@ export class ImageGenService {
   private constructor() {
     // this.apiEndpoint = 'https://api.siliconflow.cn';
     // this.apiKey = 'sk-fkcwndlwyfywjxmiumiyvyvnmtzcblllkcnisrfvufawdtep';
-    this.apiEndpoint = 'https://api.xi-ai.cn';
-    this.apiKey = 'sk-wW0StH8enCqyPjUEC1783339A0Ec4121A31499954dEf8918';
+    // this.apiEndpoint = 'https://api.xi-ai.cn';
+    // this.apiKey = 'sk-wW0StH8enCqyPjUEC1783339A0Ec4121A31499954dEf8918';
+    this.apiEndpoint = 'https://api.rcouyi.com';
+    this.apiKey = 'sk-o7Sg7iDsuwgQic2BF75160D0915b43EcA450241a65879711';
     // 设置基础URL，用于生成图片访问地址
     this.baseUrl = process.env.BASE_URL || 'http://localhost:5000';
 
@@ -156,55 +159,102 @@ export class ImageGenService {
       //     },
       //   }
       // );
-      const response = await axiosInstance.post(
-        `${this.apiEndpoint}/v1/chat/completions`,
-        {
-          model: 'gpt-image-1-vip',
-          // messages: [
-          //   {
-          //     role: 'user',
-          //     content: params.prompt
-          //   }
-          // ],
-          messages: conversation?.images?.map(item => ({
-            role: 'user',
-            content: item.prompt
-          })).concat({
-            role: 'user',
-            content: params.prompt
-          }),
-          frequency_penalty: 0,
-          max_tokens: 4000,
-          presence_penalty: 0,
-          stream: true,
-          temperature: 0.5,
-          top_p: 1
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json',
+      // const response = await axiosInstance.post(
+      //   `${this.apiEndpoint}/v1/chat/completions`,
+      //   {
+      //     model: 'gpt-image-1-vip',
+      //     // messages: [
+      //     //   {
+      //     //     role: 'user',
+      //     //     content: params.prompt
+      //     //   }
+      //     // ],
+      //     messages: conversation?.images?.map(item => ({
+      //       role: 'user',
+      //       content: item.prompt
+      //     })).concat({
+      //       role: 'user',
+      //       content: params.prompt
+      //     }),
+      //     frequency_penalty: 0,
+      //     max_tokens: 4000,
+      //     presence_penalty: 0,
+      //     stream: true,
+      //     temperature: 0.5,
+      //     top_p: 1
+      //   },
+      //   {
+      //     headers: {
+      //       'Authorization': `Bearer ${this.apiKey}`,
+      //       'Content-Type': 'application/json',
+      //     },
+      //     // responseType: 'stream'
+      //   }
+      // );
+      let savedImagePath = '';
+      let response = null;
+      if (params.type === 'text2img' && conversation?.images?.length === 0) {
+        response = await axiosInstance.post(
+          `${this.apiEndpoint}/v1/images/generations`,
+          {
+            prompt: params.prompt,
+            n: 1,
+            size: '1024x1024',
+            model: 'gpt-image-1',
           },
-          // responseType: 'stream'
-        }
-      );
-
-      // 处理流式响应
-      const imageUrl = parseImageUrlFromStream(response.data);
-      if (imageUrl) {
-          console.log('Found image URL:', imageUrl);
+          {
+            headers: {
+              'Authorization': `Bearer ${this.apiKey}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
       } else {
-          console.log('No image URL found in the stream data');
+        const formData = new FormData();
+        if (params.sourceImage) {
+          formData.append('image', fs.createReadStream(path.join(process.cwd(), params.sourceImage)));
+        } else if (conversation?.images?.reverse()?.[0]?.url) {
+          formData.append('image', fs.createReadStream(path.join(process.cwd(), conversation?.images?.reverse()?.[0]?.url?.replace(this.baseUrl, ''))));
+        }
+        formData.append('prompt', params.prompt);
+        formData.append('model', 'gpt-image-1');
+        formData.append('n', '1');
+        formData.append('size', '1024x1024');
+        response = await axiosInstance.post(
+          `${this.apiEndpoint}/v1/images/edits`,
+          formData,
+          {
+            headers: {
+              ...formData.getHeaders(),
+              'Authorization': `Bearer ${this.apiKey}`,
+            },
+          }
+        );
       }
 
-      if (!imageUrl) {
-        throw new AppError(500, '未能获取到生成的图片URL');
+      // 将base64数据保存为图片文件
+      const base64Data = response?.data?.data?.[0]?.b64_json;
+      if (base64Data) {
+        savedImagePath = await saveBase64ImageToFile(base64Data, IMAGES_DIR);
+        logger.info(`Image has been saved to: ${savedImagePath}`);
       }
 
-      // 下载并保存图片
-      // const aiGeneratedImageUrl = response.data.data[0].url;
-      // const savedImagePath = await downloadAndSaveImage(aiGeneratedImageUrl, IMAGES_DIR);
-      const savedImagePath = await downloadAndSaveImage(imageUrl, IMAGES_DIR);
+      // // 处理流式响应
+      // const imageUrl = parseImageUrlFromStream(response.data);
+      // if (imageUrl) {
+      //     console.log('Found image URL:', imageUrl);
+      // } else {
+      //     console.log('No image URL found in the stream data');
+      // }
+
+      // if (!imageUrl) {
+      //   throw new AppError(500, '未能获取到生成的图片URL');
+      // }
+
+      // // 下载并保存图片
+      // // const aiGeneratedImageUrl = response.data.data[0].url;
+      // // const savedImagePath = await downloadAndSaveImage(aiGeneratedImageUrl, IMAGES_DIR);
+      // const savedImagePath = await downloadAndSaveImage(imageUrl, IMAGES_DIR);
       
       // 生成永久访问URL
       const permanentUrl = `${this.baseUrl}/${savedImagePath}`;
