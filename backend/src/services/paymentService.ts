@@ -244,8 +244,8 @@ class PaymentService {
         const remainingCount = await this.getUserServiceUsage(userId, type, order.createdAt);
         
         // 如果剩余次数为0，则不能继续使用
-        // if (remainingCount <= 0) {
-        if (false) {
+        if (remainingCount <= 0) {
+        // if (false) {
           return {
             canUse: false,
             needPayment: true,
