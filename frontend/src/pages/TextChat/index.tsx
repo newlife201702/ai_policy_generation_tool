@@ -212,8 +212,8 @@ const TextChat: React.FC = () => {
       setMessages(prev => [{
         id: '0',
         role: 'user',
-        // content: contents[0],
-        content: contents[0] + '回答请控制在150字以内',
+        content: contents[0],
+        // content: contents[0] + '回答请控制在150字以内',
         timestamp: new Date().toISOString(),
         hidden: false, // 添加hidden属性，表示不显示
         parentId: undefined
@@ -228,8 +228,8 @@ const TextChat: React.FC = () => {
         const userMessage: ExtendedMessage = {
           id: uuidv4(),
           role: 'user',
-          // content: content,
-          content: content + '回答请控制在150字以内',
+          content: content,
+          // content: content + '回答请控制在150字以内',
           timestamp: new Date().toISOString(),
           hidden: true, // 添加hidden属性，表示不显示
           parentId: undefined
@@ -260,8 +260,8 @@ const TextChat: React.FC = () => {
             })),
             {
               role: 'user',
-              // content,
-              content: content + '回答请控制在150字以内',
+              content,
+              // content: content + '回答请控制在150字以内',
               timestamp: userMessage.timestamp
             }
           ],
@@ -411,8 +411,8 @@ const TextChat: React.FC = () => {
     const userMessage: ExtendedMessage = {
       id: uuidv4(),
       role: 'user',
-      content: content,
-      // content: content + '回答请控制在150字以内',
+      // content: content,
+      content: content + '回答请控制在150字以内',
       timestamp: new Date().toISOString(),
       parentId: selectedMessageId
     };
@@ -464,8 +464,8 @@ const TextChat: React.FC = () => {
           { 
             id: userMessage.id,
             role: 'user',
-            // content, 
-            content: content + '回答请控制在150字以内',
+            content, 
+            // content: content + '回答请控制在150字以内',
             timestamp: userMessage.timestamp,
             parentId: selectedMessageId
           }
